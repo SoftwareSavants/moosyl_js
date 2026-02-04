@@ -1,0 +1,27 @@
+{
+  "name": "moosyl",
+  "version": "0.0.1",
+  "description": "integrating payment solutions with Mauritania's popular banking apps",
+  "type": "module",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SoftwareSavants/moosyl_js.git"
+  },
+  "keywords": [
+    "moosyl",
+    "payments"
+  ],
+  "author": "software-savants",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/SoftwareSavants/moosyl_js/issues"
+  },
+  "homepage": "https://github.com/SoftwareSavants/moosyl_js#readme"
+}

@@ -1,0 +1,16 @@
+{
+  "name": "moosyl-example",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Local example to test moosyl package without publishing",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "test:methods": "node index.js methods",
+    "test:request": "node index.js request"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "moosyl": "file:.."
+  }
+}
