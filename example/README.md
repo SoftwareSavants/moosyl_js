@@ -4,16 +4,17 @@ This folder is a **local test app** for the `moosyl` package. It uses the packag
 
 ## Setup (one time)
 
-From the **repo root**:
+From the **repo root**, build the package and set up the example:
 
 ```bash
+npm run build          # compile TypeScript to dist/
 cd example
 npm install
 cp .env.example .env
-# Edit .env and set MOOSYL_API_KEY=your_key (and optionally TRANSACTION_ID for payment request)
+# Edit .env and set MOOSYL_API_KEY=your_key (and optionally TRANSACTION_ID, etc.)
 ```
 
-This installs the parent package as a dependency (linked to your local code). The `.env` file is gitignored; copy from `.env.example` and add your keys.
+This installs the parent package (linked to your local `dist/`). The example runs with **tsx** (TypeScript). The `.env` file is gitignored; copy from `.env.example` and add your keys.
 
 ## Run
 

@@ -9,6 +9,8 @@
  *   npm run test:request   - fetch payment request only (requires TRANSACTION_ID)
  *   npm run test:pay       - pay() only (requires TRANSACTION_ID, PHONE_NUMBER, PASS_CODE, PAYMENT_METHOD_ID)
  *   npm run test:manual    - manualPay() only (requires TRANSACTION_ID, PAYMENT_METHOD_ID)
+ *
+ * Note: From repo root run `npm run build` first so that the example uses the built dist/.
  */
 
 import 'dotenv/config';
@@ -26,7 +28,7 @@ const PASS_CODE = process.env.PASS_CODE;
 const PAYMENT_METHOD_ID = process.env.PAYMENT_METHOD_ID;
 const isTestingMode = true;
 
-async function testPaymentMethods() {
+async function testPaymentMethods(): Promise<void> {
   console.log('\n--- Get payment methods ---');
   const service = new GetPaymentMethodsService(API_KEY);
   try {
@@ -35,21 +37,21 @@ async function testPaymentMethods() {
     methods.forEach((m, i) => {
       const title = PaymentMethodTitles[m.method] ?? m.method;
       const extra =
-        m.bPayNumber != null
+        'bPayNumber' in m && m.bPayNumber != null
           ? ` bPay: ${m.bPayNumber}`
-          : m.merchantCode != null
+          : 'merchantCode' in m && m.merchantCode != null
             ? ` merchantCode: ${m.merchantCode}`
             : '';
       console.log(`  ${i + 1}. ${title} (${m.type}) id=${m.id}${extra}`);
     });
   } catch (e) {
-    console.error('Error:', e.message);
+    console.error('Error:', (e as Error).message);
     if (API_KEY === 'pk_test_placeholder')
       console.log('Tip: set MOOSYL_API_KEY for a real request.');
   }
 }
 
-async function testPaymentRequest() {
+async function testPaymentRequest(): Promise<void> {
   if (!TRANSACTION_ID) {
     console.log('\n--- Get payment request (skipped: no TRANSACTION_ID) ---');
     return;
@@ -62,11 +64,11 @@ async function testPaymentRequest() {
     console.log('Amount:', request.amount);
     console.log('Phone:', request.phoneNumber ?? '—');
   } catch (e) {
-    console.error('Error:', e.message);
+    console.error('Error:', (e as Error).message);
   }
 }
 
-async function testPay() {
+async function testPay(): Promise<void> {
   if (!TRANSACTION_ID || !PHONE_NUMBER || !PASS_CODE || !PAYMENT_METHOD_ID) {
     console.log(
       '\n--- Pay (skipped: set TRANSACTION_ID, PHONE_NUMBER, PASS_CODE, PAYMENT_METHOD_ID) ---'
@@ -79,11 +81,11 @@ async function testPay() {
     await service.pay(TRANSACTION_ID, PHONE_NUMBER, PASS_CODE, PAYMENT_METHOD_ID);
     console.log('Pay request sent successfully.');
   } catch (e) {
-    console.error('Error:', e.message);
+    console.error('Error:', (e as Error).message);
   }
 }
 
-async function testManualPay() {
+async function testManualPay(): Promise<void> {
   if (!TRANSACTION_ID || !PAYMENT_METHOD_ID) {
     console.log(
       '\n--- Manual pay (skipped: set TRANSACTION_ID, PAYMENT_METHOD_ID) ---'
@@ -101,7 +103,7 @@ async function testManualPay() {
     await service.manualPay(TRANSACTION_ID, PAYMENT_METHOD_ID, dummyImage);
     console.log('Manual pay request sent successfully.');
   } catch (e) {
-    console.error('Error:', e.message);
+    console.error('Error:', (e as Error).message);
   }
 }
 

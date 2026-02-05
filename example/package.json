@@ -5,14 +5,17 @@
   "description": "Local example to test moosyl package without publishing",
   "type": "module",
   "scripts": {
-    "start": "node index.js",
-    "test:methods": "node index.js methods",
-    "test:request": "node index.js request",
-    "test:pay": "node index.js pay",
-    "test:manual": "node index.js manual"
+    "start": "tsx index.ts",
+    "test:methods": "tsx index.ts methods",
+    "test:request": "tsx index.ts request",
+    "test:pay": "tsx index.ts pay",
+    "test:manual": "tsx index.ts manual"
   },
   "dependencies": {
     "dotenv": "^16.4.5",
     "moosyl": "file:.."
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0"
   }
 }
