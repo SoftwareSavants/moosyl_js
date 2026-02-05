@@ -14,12 +14,7 @@
  */
 
 import 'dotenv/config';
-import {
-  GetPaymentMethodsService,
-  GetPaymentRequestService,
-  PayService,
-  PaymentMethodTitles,
-} from 'moosyl';
+import { Moosyl, PaymentMethodTitles } from 'moosyl';
 
 const API_KEY = process.env.MOOSYL_API_KEY || 'pk_test_placeholder';
 const TRANSACTION_ID = process.env.TRANSACTION_ID;
@@ -28,11 +23,12 @@ const PASS_CODE = process.env.PASS_CODE;
 const PAYMENT_METHOD_ID = process.env.PAYMENT_METHOD_ID;
 const isTestingMode = true;
 
+const moosyl = new Moosyl(API_KEY);
+
 async function testPaymentMethods(): Promise<void> {
   console.log('\n--- Get payment methods ---');
-  const service = new GetPaymentMethodsService(API_KEY);
   try {
-    const methods = await service.get(isTestingMode);
+    const methods = await moosyl.getPaymentMethods(isTestingMode);
     console.log('Count:', methods.length);
     methods.forEach((m, i) => {
       const title = PaymentMethodTitles[m.method] ?? m.method;
@@ -57,9 +53,8 @@ async function testPaymentRequest(): Promise<void> {
     return;
   }
   console.log('\n--- Get payment request ---');
-  const service = new GetPaymentRequestService(API_KEY);
   try {
-    const request = await service.get(TRANSACTION_ID);
+    const request = await moosyl.getPaymentRequest(TRANSACTION_ID);
     console.log('Id:', request.id);
     console.log('Amount:', request.amount);
     console.log('Phone:', request.phoneNumber ?? '—');
@@ -76,9 +71,8 @@ async function testPay(): Promise<void> {
     return;
   }
   console.log('\n--- Pay ---');
-  const service = new PayService(API_KEY);
   try {
-    await service.pay(TRANSACTION_ID, PHONE_NUMBER, PASS_CODE, PAYMENT_METHOD_ID);
+    await moosyl.pay(TRANSACTION_ID, PHONE_NUMBER, PASS_CODE, PAYMENT_METHOD_ID);
     console.log('Pay request sent successfully.');
   } catch (e) {
     console.error('Error:', (e as Error).message);
@@ -93,14 +87,13 @@ async function testManualPay(): Promise<void> {
     return;
   }
   console.log('\n--- Manual pay ---');
-  const service = new PayService(API_KEY);
   const dummyImage = {
     name: 'proof.png',
     data: Buffer.from('dummy image bytes'),
     type: 'image/png',
   };
   try {
-    await service.manualPay(TRANSACTION_ID, PAYMENT_METHOD_ID, dummyImage);
+    await moosyl.manualPay(TRANSACTION_ID, PAYMENT_METHOD_ID, dummyImage);
     console.log('Manual pay request sent successfully.');
   } catch (e) {
     console.error('Error:', (e as Error).message);

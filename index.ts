@@ -2,6 +2,8 @@
  * Moosyl JS – integrating payment solutions with Mauritania's popular banking apps.
  */
 
+export { Moosyl } from './src/moosyl.js';
+
 export { Fetcher, FetcherResponse, Endpoints } from './src/helpers/fetcher.js';
 export { AppException, AppExceptionCode } from './src/helpers/exceptions.js';
 

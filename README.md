@@ -26,31 +26,31 @@ Install the package:
 npm install moosyl
 ```
 
-### Import the package
+### Create a Moosyl instance
+
+Create a single client with your publishable API key. All operations use this instance:
 
 ```javascript
-import {
-  GetPaymentMethodsService,
-  GetPaymentRequestService,
-  PayService,
-  PaymentRequestModel,
-  PaymentMethodTitles,
-} from "moosyl";
+import { Moosyl, PaymentMethodTitles } from "moosyl";
+
+const moosyl = new Moosyl("YOUR_PUBLISHABLE_API_KEY");
 ```
 
 ---
 
 ## Usage
 
+All functionality is available on the **Moosyl** instance: `moosyl.getPaymentMethods()`, `moosyl.getPaymentRequest()`, `moosyl.pay()`, and `moosyl.manualPay()`.
+
 ### Fetch payment methods
 
 Get the list of payment methods (e.g. to show options to the user):
 
 ```javascript
-import { GetPaymentMethodsService } from "moosyl";
+import { Moosyl, PaymentMethodTitles } from "moosyl";
 
-const service = new GetPaymentMethodsService("YOUR_PUBLISHABLE_API_KEY");
-const methods = await service.get(true); // true = testing mode
+const moosyl = new Moosyl("YOUR_PUBLISHABLE_API_KEY");
+const methods = await moosyl.getPaymentMethods(true); // true = testing mode
 
 methods.forEach((m) => {
   const title = PaymentMethodTitles[m.method] ?? m.method;
@@ -64,10 +64,10 @@ methods.forEach((m) => {
 Get details for a given transaction (after creating a payment request from your backend):
 
 ```javascript
-import { GetPaymentRequestService } from "moosyl";
+import { Moosyl } from "moosyl";
 
-const service = new GetPaymentRequestService("YOUR_PUBLISHABLE_API_KEY");
-const request = await service.get("TRANSACTION_ID");
+const moosyl = new Moosyl("YOUR_PUBLISHABLE_API_KEY");
+const request = await moosyl.getPaymentRequest("TRANSACTION_ID");
 
 console.log(request.id, request.amount, request.phoneNumber);
 ```
@@ -87,39 +87,43 @@ curl -X POST https://api.moosyl.com/payment-request \
   }'
 ```
 
-Once created, use the returned **transactionId** with `GetPaymentRequestService` and your payment flow.
+Once created, use the returned **transactionId** with `moosyl.getPaymentRequest()` and your payment flow.
 
 ### Process payment (auto)
 
-For automatic payment methods (e.g. Bankily), send the transaction ID, customer phone number, passcode, and the selected payment method (configuration) ID:
+For automatic payment methods (e.g. Bankily):
 
 ```javascript
-import { PayService } from "moosyl";
+import { Moosyl } from "moosyl";
 
-const pay = new PayService("YOUR_PUBLISHABLE_API_KEY");
+const moosyl = new Moosyl("YOUR_PUBLISHABLE_API_KEY");
 
-await pay.pay(
+await moosyl.pay(
   "TRANSACTION_ID",
   "+22212345678",
   "PASSCODE",
-  "PAYMENT_METHOD_ID"  // configuration ID from GetPaymentMethodsService
+  "PAYMENT_METHOD_ID" // configuration ID from getPaymentMethods()
 );
 ```
 
 ### Process manual payment
 
-For manual payment methods, send the transaction ID, payment method ID, and a screenshot of the payment (File in the browser, or `{ name, data, type? }` in Node):
+For manual payment methods, send a screenshot (File in the browser, or `{ name, data, type? }` in Node):
 
 ```javascript
-import { PayService } from "moosyl";
+import { Moosyl } from "moosyl";
 
-const pay = new PayService("YOUR_PUBLISHABLE_API_KEY");
+const moosyl = new Moosyl("YOUR_PUBLISHABLE_API_KEY");
 
 // Browser: pass a File from an input
-await pay.manualPay("TRANSACTION_ID", "PAYMENT_METHOD_ID", fileInput.files[0]);
+await moosyl.manualPay(
+  "TRANSACTION_ID",
+  "PAYMENT_METHOD_ID",
+  fileInput.files[0]
+);
 
 // Node: pass { name, data (Buffer), type? }
-await pay.manualPay("TRANSACTION_ID", "PAYMENT_METHOD_ID", {
+await moosyl.manualPay("TRANSACTION_ID", "PAYMENT_METHOD_ID", {
   name: "proof.png",
   data: imageBuffer,
   type: "image/png",
@@ -128,26 +132,10 @@ await pay.manualPay("TRANSACTION_ID", "PAYMENT_METHOD_ID", {
 
 ---
 
-## API overview
-
-| Export                                                     | Description                                            |
-| ---------------------------------------------------------- | ------------------------------------------------------ |
-| `GetPaymentMethodsService`                                 | Fetches available payment methods.                     |
-| `GetPaymentRequestService`                                 | Fetches payment request by transaction ID.              |
-| `PayService`                                               | Processes payments: `pay()` (auto) and `manualPay()` (with screenshot). |
-| `PaymentRequestModel`                                     | Model for payment request (id, amount, phoneNumber).    |
-| `PaymentMethod`, `BankilyConfigModel`, `ManualConfigModel` | Payment method models.                                  |
-| `PaymentMethodTitles`                                     | Display names for payment method types.                 |
-| `PaymentType`, `PaymentMethodTypes`                       | Enums/constants for method and type.                   |
-| `Fetcher`, `Endpoints`                                    | Low-level HTTP client and API URLs (for advanced use). |
-| `AppException`                                            | Error type thrown on failed API calls.                  |
-
----
-
 ## Configuration
 
-- **API key**: Use your **publishable** API key for `GetPaymentMethodsService`, `GetPaymentRequestService`, and `PayService`. Get keys at [moosyl.com](https://moosyl.com).
-- **Testing mode**: Pass `true` to `GetPaymentMethodsService#get(isTestingMode)` for test configuration.
+- **API key**: Use your **publishable** API key when creating `new Moosyl(apiKey)`. Get keys at [moosyl.com](https://moosyl.com).
+- **Testing mode**: Pass `true` to `moosyl.getPaymentMethods(true)` for test configuration.
 
 ---
 
