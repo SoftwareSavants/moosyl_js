@@ -20,3 +20,4 @@ export { PaymentRequestModel } from './src/models/payment-request-model.js';
 
 export { GetPaymentMethodsService } from './src/services/get-payment-methods-service.js';
 export { GetPaymentRequestService } from './src/services/get-payment-request-service.js';
+export { PayService } from './src/services/pay-service.js';

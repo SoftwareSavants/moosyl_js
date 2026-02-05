@@ -26,7 +26,13 @@ npm run test:methods
 # Test payment request (requires TRANSACTION_ID)
 MOOSYL_API_KEY=your_key TRANSACTION_ID=some_id npm run test:request
 
-# Run both
+# Test pay (requires TRANSACTION_ID, PHONE_NUMBER, PASS_CODE, PAYMENT_METHOD_ID)
+npm run test:pay
+
+# Test manual pay (requires TRANSACTION_ID, PAYMENT_METHOD_ID)
+npm run test:manual
+
+# Run all (skips pay/manual pay if env vars missing)
 npm start
 ```
 

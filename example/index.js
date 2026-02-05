@@ -1,23 +1,29 @@
 /**
  * Example app to test the moosyl package locally.
  * Uses the linked package from the parent folder (no publish needed).
- * Loads env from example/.env (MOOSYL_API_KEY, TRANSACTION_ID).
+ * Loads env from example/.env (MOOSYL_API_KEY, TRANSACTION_ID, etc.).
  *
  * Usage:
- *   npm start              - run both: payment methods + payment request (if TRANSACTION_ID set)
+ *   npm start              - run all: methods + request + pay + manualPay (skip if env missing)
  *   npm run test:methods   - fetch payment methods only
  *   npm run test:request   - fetch payment request only (requires TRANSACTION_ID)
+ *   npm run test:pay       - pay() only (requires TRANSACTION_ID, PHONE_NUMBER, PASS_CODE, PAYMENT_METHOD_ID)
+ *   npm run test:manual    - manualPay() only (requires TRANSACTION_ID, PAYMENT_METHOD_ID)
  */
 
 import 'dotenv/config';
 import {
   GetPaymentMethodsService,
   GetPaymentRequestService,
+  PayService,
   PaymentMethodTitles,
 } from 'moosyl';
 
 const API_KEY = process.env.MOOSYL_API_KEY || 'pk_test_placeholder';
 const TRANSACTION_ID = process.env.TRANSACTION_ID;
+const PHONE_NUMBER = process.env.PHONE_NUMBER;
+const PASS_CODE = process.env.PASS_CODE;
+const PAYMENT_METHOD_ID = process.env.PAYMENT_METHOD_ID;
 const isTestingMode = true;
 
 async function testPaymentMethods() {
@@ -60,12 +66,57 @@ async function testPaymentRequest() {
   }
 }
 
+async function testPay() {
+  if (!TRANSACTION_ID || !PHONE_NUMBER || !PASS_CODE || !PAYMENT_METHOD_ID) {
+    console.log(
+      '\n--- Pay (skipped: set TRANSACTION_ID, PHONE_NUMBER, PASS_CODE, PAYMENT_METHOD_ID) ---'
+    );
+    return;
+  }
+  console.log('\n--- Pay ---');
+  const service = new PayService(API_KEY);
+  try {
+    await service.pay(TRANSACTION_ID, PHONE_NUMBER, PASS_CODE, PAYMENT_METHOD_ID);
+    console.log('Pay request sent successfully.');
+  } catch (e) {
+    console.error('Error:', e.message);
+  }
+}
+
+async function testManualPay() {
+  if (!TRANSACTION_ID || !PAYMENT_METHOD_ID) {
+    console.log(
+      '\n--- Manual pay (skipped: set TRANSACTION_ID, PAYMENT_METHOD_ID) ---'
+    );
+    return;
+  }
+  console.log('\n--- Manual pay ---');
+  const service = new PayService(API_KEY);
+  const dummyImage = {
+    name: 'proof.png',
+    data: Buffer.from('dummy image bytes'),
+    type: 'image/png',
+  };
+  try {
+    await service.manualPay(TRANSACTION_ID, PAYMENT_METHOD_ID, dummyImage);
+    console.log('Manual pay request sent successfully.');
+  } catch (e) {
+    console.error('Error:', e.message);
+  }
+}
+
 const cmd = process.argv[2];
 if (cmd === 'methods') {
   await testPaymentMethods();
 } else if (cmd === 'request') {
   await testPaymentRequest();
+} else if (cmd === 'pay') {
+  await testPay();
+} else if (cmd === 'manual') {
+  await testManualPay();
 } else {
   await testPaymentMethods();
   await testPaymentRequest();
+  await testPay();
+  await testManualPay();
 }

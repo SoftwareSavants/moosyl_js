@@ -7,7 +7,9 @@
   "scripts": {
     "start": "node index.js",
     "test:methods": "node index.js methods",
-    "test:request": "node index.js request"
+    "test:request": "node index.js request",
+    "test:pay": "node index.js pay",
+    "test:manual": "node index.js manual"
   },
   "dependencies": {
     "dotenv": "^16.4.5",
