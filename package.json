@@ -1,6 +1,6 @@
 {
   "name": "moosyl",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "integrating payment solutions with Mauritania's popular banking apps",
   "type": "module",
   "main": "dist/index.js",
@@ -34,5 +34,8 @@
     "url": "https://github.com/SoftwareSavants/moosyl_js/issues"
   },
   "homepage": "https://github.com/SoftwareSavants/moosyl_js#readme",
-  "files": ["dist", "README.md"]
+  "files": [
+    "dist",
+    "README.md"
+  ]
 }
