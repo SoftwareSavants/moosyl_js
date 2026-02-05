@@ -33,5 +33,6 @@
   "bugs": {
     "url": "https://github.com/SoftwareSavants/moosyl_js/issues"
   },
-  "homepage": "https://github.com/SoftwareSavants/moosyl_js#readme"
+  "homepage": "https://github.com/SoftwareSavants/moosyl_js#readme",
+  "files": ["dist", "README.md"]
 }
