@@ -9,12 +9,10 @@ export class GetPaymentMethodsService {
 
   async get(isTestingMode: boolean): Promise<PaymentMethod[]> {
     const result = await new Fetcher(this.publishableApiKey).get(
-      Endpoints.paymentMethods(isTestingMode)
+      Endpoints.paymentMethods(isTestingMode),
     );
     const data = result.data as { data?: unknown[] } | undefined;
     const list = Array.isArray(data?.data) ? data!.data : [];
-    return list.map((e) =>
-      PaymentMethod.fromPaymentType(e as Record<string, unknown>)
-    );
+    return list.map((e) => PaymentMethod.fromMap(e as Record<string, unknown>));
   }
 }

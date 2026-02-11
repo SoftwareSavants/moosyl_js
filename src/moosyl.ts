@@ -1,10 +1,10 @@
-import { GetPaymentMethodsService } from './services/get-payment-methods-service.js';
-import { GetPaymentRequestService } from './services/get-payment-request-service.js';
-import { PayService } from './services/pay-service.js';
-import type { PaymentMethod } from './models/payment-method-model.js';
-import type { PaymentRequestModel } from './models/payment-request-model.js';
-import type { FetcherResponse } from './helpers/fetcher.js';
-import type { ManualPayImageInput } from './services/pay-service.js';
+import { GetPaymentMethodsService } from "./services/get-payment-methods-service.js";
+import { GetPaymentRequestService } from "./services/get-payment-request-service.js";
+import { PayService } from "./services/pay-service.js";
+import type { PaymentMethod } from "./models/payment-method-model.js";
+import type { PaymentRequestModel } from "./models/payment-request-model.js";
+import type { FetcherResponse } from "./helpers/fetcher.js";
+import type { ManualPayImageInput } from "./services/pay-service.js";
 
 /**
  * Main Moosyl SDK client. Create an instance with your publishable API key,
@@ -54,23 +54,13 @@ export class Moosyl {
     transactionId: string,
     phoneNumber: string,
     passCode: string,
-    paymentMethodId: string
-  ): Promise<FetcherResponse> {
-    return this.payService.pay(transactionId, phoneNumber, passCode, paymentMethodId);
-  }
-
-  /**
-   * Processes a manual payment with a screenshot.
-   * @param transactionId - Transaction ID
-   * @param paymentMethodId - Configuration ID from getPaymentMethods()
-   * @param selectedImage - File (browser) or { name, data, type? } (Node)
-   * @returns API response
-   */
-  manualPay(
-    transactionId: string,
     paymentMethodId: string,
-    selectedImage: ManualPayImageInput
   ): Promise<FetcherResponse> {
-    return this.payService.manualPay(transactionId, paymentMethodId, selectedImage);
+    return this.payService.pay(
+      transactionId,
+      phoneNumber,
+      passCode,
+      paymentMethodId,
+    );
   }
 }

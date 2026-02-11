@@ -1,10 +1,10 @@
-import { AppException, AppExceptionCode } from './exceptions.js';
+import { AppException, AppExceptionCode } from "./exceptions.js";
 
 /**
  * Static API base URL and endpoint builders.
  */
 export const Endpoints = {
-  baseUrl: 'https://moosyl.moosyl.workers.dev',
+  baseUrl: "https://moosyl.moosyl.workers.dev",
 
   paymentMethods(isTestingMode: boolean): string {
     return `${this.baseUrl}/configuration?isTestingMode=${isTestingMode}`;
@@ -12,10 +12,6 @@ export const Endpoints = {
 
   get pay(): string {
     return `${this.baseUrl}/payment`;
-  },
-
-  get manualPayment(): string {
-    return `${this.baseUrl}/payment/manual`;
   },
 
   paymentRequest(id: string): string {
@@ -43,65 +39,48 @@ export class Fetcher {
 
   get headers(): Record<string, string> {
     return {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       Authorization: this.publishableApiKey,
     };
   }
 
-  static async fromResponse(response: Response, bytes = false): Promise<FetcherResponse> {
-    const url = response.url ?? '';
+  private async fromResponse(
+    response: Response,
+    raw = false,
+  ): Promise<FetcherResponse> {
+    const url = response.url ?? "";
     const status = response.status;
     const body = await response.text();
-    const data = bytes ? body : parseResponseBody(body);
+    const data = raw ? body : parseResponseBody(body);
     return new FetcherResponse({ url, status, data });
   }
 
-  async get(url: string, options: { bytes?: boolean } = {}): Promise<FetcherResponse> {
-    const { bytes = false } = options;
+  async get(
+    url: string,
+    options: { raw?: boolean } = {},
+  ): Promise<FetcherResponse> {
+    const { raw = false } = options;
     const response = await fetch(url, {
-      method: 'GET',
+      method: "GET",
       headers: this.headers,
       signal: AbortSignal.timeout(60_000),
     });
-    const res = await Fetcher.fromResponse(response, bytes);
+    const res = await this.fromResponse(response, raw);
     if (!res.success) throw res.toException();
     return res;
   }
 
-  async post(url: string, body?: Record<string, unknown>): Promise<FetcherResponse> {
+  async post(
+    url: string,
+    body?: Record<string, unknown>,
+  ): Promise<FetcherResponse> {
     const response = await fetch(url, {
-      method: 'POST',
+      method: "POST",
       headers: this.headers,
       body: body ? JSON.stringify(body) : undefined,
       signal: AbortSignal.timeout(60_000),
     });
-    const res = await Fetcher.fromResponse(response);
-    if (!res.success) throw res.toException();
-    return res;
-  }
-
-  async multipartPost(
-    url: string,
-    body: Record<string, string>,
-    files: { name: string; data: Buffer | Blob; filename?: string }[] = []
-  ): Promise<FetcherResponse> {
-    const form = new FormData();
-    for (const [key, value] of Object.entries(body)) {
-      form.append(key, value);
-    }
-    for (const file of files) {
-      const blob =
-        file.data instanceof Blob ? file.data : new Blob([new Uint8Array(file.data)]);
-      form.append('attachments', blob, file.filename ?? file.name);
-    }
-    const headers = { Authorization: this.publishableApiKey };
-    const response = await fetch(url, {
-      method: 'POST',
-      headers,
-      body: form,
-      signal: AbortSignal.timeout(60_000),
-    });
-    const res = await Fetcher.fromResponse(response);
+    const res = await this.fromResponse(response);
     if (!res.success) throw res.toException();
     return res;
   }
@@ -126,23 +105,23 @@ export class FetcherResponse {
   }
 
   stripHtmlIfNeeded(text: string): string {
-    return String(text).replace(/<[^>]*>|&[^;]+;/g, ' ');
+    return String(text).replace(/<[^>]*>|&[^;]+;/g, " ");
   }
 
   toException(): AppException {
     const data = this.data;
     const code =
-      typeof data === 'string'
+      typeof data === "string"
         ? data
-        : (data && typeof data === 'object' && 'code' in data
-            ? (data as { code: string }).code
-            : AppExceptionCode.unknown);
+        : data && typeof data === "object" && "code" in data
+          ? (data as { code: string }).code
+          : AppExceptionCode.unknown;
     const message =
-      typeof data === 'string'
+      typeof data === "string"
         ? data
-        : (data && typeof data === 'object' && 'message' in data
-            ? (data as { message: string }).message
-            : 'An error occurred');
+        : data && typeof data === "object" && "message" in data
+          ? (data as { message: string }).message
+          : "An error occurred";
     return new AppException({ code, message: String(message) });
   }
 }
