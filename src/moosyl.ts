@@ -4,7 +4,6 @@ import { PayService } from "./services/pay-service.js";
 import type { PaymentMethod } from "./models/payment-method-model.js";
 import type { PaymentRequestModel } from "./models/payment-request-model.js";
 import type { FetcherResponse } from "./helpers/fetcher.js";
-import type { ManualPayImageInput } from "./services/pay-service.js";
 
 /**
  * Main Moosyl SDK client. Create an instance with your publishable API key,
@@ -43,7 +42,7 @@ export class Moosyl {
   }
 
   /**
-   * Processes an automatic payment (e.g. Bankily).
+   * Processes a payment (e.g. Bankily).
    * @param transactionId - Transaction ID
    * @param phoneNumber - Customer phone number
    * @param passCode - Customer passcode

@@ -1,9 +1,5 @@
 import { Fetcher, Endpoints, FetcherResponse } from "../helpers/fetcher.js";
 
-export type ManualPayImageInput =
-  | File
-  | { name: string; data: Buffer | Uint8Array | ArrayBuffer; type?: string };
-
 /**
  * Service for processing payments via the Moosyl API.
  */

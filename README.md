@@ -2,7 +2,7 @@
 
 [![npm version](https://img.shields.io/npm/v/moosyl.svg)](https://www.npmjs.com/package/moosyl)
 
-The **Moosyl JavaScript SDK** helps you integrate payment solutions with Mauritania's popular banking apps—such as **Bankily**, **Sedad**, and **Masrivi**—in Node.js or the browser. Use it to fetch available payment methods, payment request details, and process payments (auto or manual) via the Moosyl API.
+The **Moosyl JavaScript SDK** helps you integrate payment solutions with Mauritania's popular banking apps—such as **Bankily**, **Sedad**, and **Masrivi**—in Node.js or the browser. Use it to fetch available payment methods, payment request details, and process payments via the Moosyl API.
 
 ---
 
@@ -10,7 +10,7 @@ The **Moosyl JavaScript SDK** helps you integrate payment solutions with Maurita
 
 - **Payment methods**: Fetch available payment methods (including testing mode).
 - **Payment request**: Get payment request details by transaction ID.
-- **Pay**: Process automatic payments (e.g. Bankily) or manual payments with a screenshot.
+- **Pay**: Process payments (e.g. Bankily).
 - **Lightweight**: No UI; use your own front end or backend flows.
 - **ESM**: Native ES modules (`import`).
 
@@ -40,7 +40,7 @@ const moosyl = new Moosyl("YOUR_PUBLISHABLE_API_KEY");
 
 ## Usage
 
-All functionality is available on the **Moosyl** instance: `moosyl.getPaymentMethods()`, `moosyl.getPaymentRequest()`, `moosyl.pay()`, and `moosyl.manualPay()`.
+All functionality is available on the **Moosyl** instance: `moosyl.getPaymentMethods()`, `moosyl.getPaymentRequest()`, `moosyl.pay()`.
 
 ### Fetch payment methods
 
@@ -89,9 +89,9 @@ curl -X POST https://api.moosyl.com/payment-request \
 
 Once created, use the returned **transactionId** with `moosyl.getPaymentRequest()` and your payment flow.
 
-### Process payment (auto)
+### Process payment
 
-For automatic payment methods (e.g. Bankily):
+For payment methods (e.g. Bankily):
 
 ```javascript
 import { Moosyl } from "moosyl";
@@ -102,32 +102,8 @@ await moosyl.pay(
   "TRANSACTION_ID",
   "+22212345678",
   "PASSCODE",
-  "PAYMENT_METHOD_ID" // configuration ID from getPaymentMethods()
+  "PAYMENT_METHOD_ID", // configuration ID from getPaymentMethods()
 );
-```
-
-### Process manual payment
-
-For manual payment methods, send a screenshot (File in the browser, or `{ name, data, type? }` in Node):
-
-```javascript
-import { Moosyl } from "moosyl";
-
-const moosyl = new Moosyl("YOUR_PUBLISHABLE_API_KEY");
-
-// Browser: pass a File from an input
-await moosyl.manualPay(
-  "TRANSACTION_ID",
-  "PAYMENT_METHOD_ID",
-  fileInput.files[0]
-);
-
-// Node: pass { name, data (Buffer), type? }
-await moosyl.manualPay("TRANSACTION_ID", "PAYMENT_METHOD_ID", {
-  name: "proof.png",
-  data: imageBuffer,
-  type: "image/png",
-});
 ```
 
 ---

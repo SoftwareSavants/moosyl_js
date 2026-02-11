@@ -55,34 +55,70 @@ export class Fetcher {
     return new FetcherResponse({ url, status, data });
   }
 
+  private wrapFetchError(err: unknown): AppException {
+    if (err instanceof Error) {
+      const name = (err as Error & { name?: string }).name;
+      if (name === "AbortError") {
+        return new AppException({
+          code: AppExceptionCode.abortError,
+          message: err.message || "Request was aborted",
+        });
+      }
+      if (name === "TimeoutError") {
+        return new AppException({
+          code: AppExceptionCode.timeout,
+          message: err.message || "Request timed out",
+        });
+      }
+      return new AppException({
+        code: AppExceptionCode.connectionError,
+        message: err.message || "Network request failed",
+      });
+    }
+    return new AppException({
+      code: AppExceptionCode.connectionError,
+      message: "Network request failed",
+    });
+  }
+
   async get(
     url: string,
     options: { raw?: boolean } = {},
   ): Promise<FetcherResponse> {
     const { raw = false } = options;
-    const response = await fetch(url, {
-      method: "GET",
-      headers: this.headers,
-      signal: AbortSignal.timeout(60_000),
-    });
-    const res = await this.fromResponse(response, raw);
-    if (!res.success) throw res.toException();
-    return res;
+    try {
+      const response = await fetch(url, {
+        method: "GET",
+        headers: this.headers,
+        signal: AbortSignal.timeout(60_000),
+      });
+      const res = await this.fromResponse(response, raw);
+      if (!res.success) throw res.toException();
+      return res;
+    } catch (err) {
+      if (err instanceof AppException) throw err;
+      throw this.wrapFetchError(err);
+    }
   }
 
   async post(
     url: string,
     body?: Record<string, unknown>,
   ): Promise<FetcherResponse> {
-    const response = await fetch(url, {
-      method: "POST",
-      headers: this.headers,
-      body: body ? JSON.stringify(body) : undefined,
-      signal: AbortSignal.timeout(60_000),
-    });
-    const res = await this.fromResponse(response);
-    if (!res.success) throw res.toException();
-    return res;
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: this.headers,
+        body: body ? JSON.stringify(body) : undefined,
+        signal: AbortSignal.timeout(60_000),
+      });
+      const res = await this.fromResponse(response);
+      if (!res.success) throw res.toException();
+      return res;
+    } catch (err) {
+      if (err instanceof AppException) throw err;
+      throw this.wrapFetchError(err);
+    }
   }
 }
 
@@ -122,6 +158,10 @@ export class FetcherResponse {
         : data && typeof data === "object" && "message" in data
           ? (data as { message: string }).message
           : "An error occurred";
-    return new AppException({ code, message: String(message) });
+    return new AppException({
+      code,
+      message: String(message),
+      status: this.status,
+    });
   }
 }

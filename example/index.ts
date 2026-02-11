@@ -4,11 +4,11 @@
  * Loads env from example/.env (MOOSYL_API_KEY, TRANSACTION_ID, etc.).
  *
  * Usage:
- *   npm start              - run all: methods + request + pay + manualPay (skip if env missing)
+ *   npm start              - run all: methods + request + pay (skip if env missing)
  *   npm run test:methods   - fetch payment methods only
  *   npm run test:request   - fetch payment request only (requires TRANSACTION_ID)
  *   npm run test:pay       - pay() only (requires TRANSACTION_ID, PHONE_NUMBER, PASS_CODE, PAYMENT_METHOD_ID)
- *   npm run test:manual    - manualPay() only (requires TRANSACTION_ID, PAYMENT_METHOD_ID)
+
  *
  * Note: From repo root run `npm run build` first so that the example uses the built dist/.
  */
