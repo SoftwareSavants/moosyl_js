@@ -1,5 +1,6 @@
 import { GetPaymentMethodsService } from "./services/get-payment-methods-service.js";
 import { GetPaymentRequestService } from "./services/get-payment-request-service.js";
+import { GetPaymentService } from "./services/get-payment.js";
 import { PayService } from "./services/pay-service.js";
 import type { PaymentMethod } from "./models/payment-method-model.js";
 import type { PaymentRequestModel } from "./models/payment-request-model.js";
@@ -7,11 +8,12 @@ import type { FetcherResponse } from "./helpers/fetcher.js";
 
 /**
  * Main Moosyl SDK client. Create an instance with your publishable API key,
- * then use the methods to fetch payment methods, payment requests, and process payments.
+ * then use the methods to fetch payment methods, payment requests, payments, and process payments.
  */
 export class Moosyl {
   private readonly getPaymentMethodsService: GetPaymentMethodsService;
   private readonly getPaymentRequestService: GetPaymentRequestService;
+  private readonly getPaymentService: GetPaymentService;
   private readonly payService: PayService;
 
   /**
@@ -20,6 +22,7 @@ export class Moosyl {
   constructor(apiKey: string) {
     this.getPaymentMethodsService = new GetPaymentMethodsService(apiKey);
     this.getPaymentRequestService = new GetPaymentRequestService(apiKey);
+    this.getPaymentService = new GetPaymentService(apiKey);
     this.payService = new PayService(apiKey);
   }
 
@@ -39,6 +42,15 @@ export class Moosyl {
    */
   getPaymentRequest(transactionId: string): Promise<PaymentRequestModel> {
     return this.getPaymentRequestService.get(transactionId);
+  }
+
+  /**
+   * Fetches a single payment by ID. Returns the raw API response (response.data holds the payment object).
+   * @param paymentId - The payment ID
+   * @returns FetcherResponse (use .data for the payload)
+   */
+  getPayment(paymentId: string): Promise<FetcherResponse> {
+    return this.getPaymentService.get(paymentId);
   }
 
   /**

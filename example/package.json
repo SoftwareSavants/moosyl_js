@@ -9,7 +9,7 @@
     "test:methods": "tsx index.ts methods",
     "test:request": "tsx index.ts request",
     "test:pay": "tsx index.ts pay",
-    "test:manual": "tsx index.ts manual"
+    "test:payment": "tsx index.ts payment"
   },
   "dependencies": {
     "dotenv": "^16.4.5",

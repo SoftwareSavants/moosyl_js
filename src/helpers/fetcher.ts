@@ -17,6 +17,10 @@ export const Endpoints = {
   paymentRequest(id: string): string {
     return `${this.baseUrl}/payment-request/by-transaction/${id}`;
   },
+
+  getPayment(id: string): string {
+    return `${this.baseUrl}/payment/${id}`;
+  },
 };
 
 function parseResponseBody(body: string): unknown {

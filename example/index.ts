@@ -8,7 +8,7 @@
  *   npm run test:methods   - fetch payment methods only
  *   npm run test:request   - fetch payment request only (requires TRANSACTION_ID)
  *   npm run test:pay       - pay() only (requires TRANSACTION_ID, PHONE_NUMBER, PASS_CODE, PAYMENT_METHOD_ID)
-
+ *   npm run test:payment   - getPayment() only (requires PAYMENT_ID)
  *
  * Note: From repo root run `npm run build` first so that the example uses the built dist/.
  */
@@ -84,6 +84,25 @@ async function testPay(): Promise<void> {
   }
 }
 
+async function testGetPayment(): Promise<void> {
+  console.log("\n--- Get payment ---");
+  try {
+    const response = await moosyl.getPayment("123456778");
+    const data = response.data as
+      | { data?: Record<string, unknown> }
+      | undefined;
+    const payment = data?.data ?? data;
+    if (payment && typeof payment === "object") {
+      console.log("Id:", payment.id);
+      console.log("Response:", JSON.stringify(payment, null, 2));
+    } else {
+      console.log("Response:", JSON.stringify(response.data, null, 2));
+    }
+  } catch (e) {
+    console.error("Error:", (e as Error).message);
+  }
+}
+
 const cmd = process.argv[2];
 if (cmd === "methods") {
   await testPaymentMethods();
@@ -91,8 +110,11 @@ if (cmd === "methods") {
   await testPaymentRequest();
 } else if (cmd === "pay") {
   await testPay();
+} else if (cmd === "payment") {
+  await testGetPayment();
 } else {
   await testPaymentMethods();
   await testPaymentRequest();
   await testPay();
+  await testGetPayment();
 }
