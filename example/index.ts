@@ -14,7 +14,7 @@
  */
 
 import "dotenv/config";
-import { Moosyl, PaymentMethodTitles } from "moosyl";
+import { Moosyl } from "moosyl";
 
 const API_KEY = process.env.MOOSYL_API_KEY || "pk_test_placeholder";
 const TRANSACTION_ID = process.env.TRANSACTION_ID;
@@ -31,7 +31,7 @@ async function testPaymentMethods(): Promise<void> {
     const methods = await moosyl.getPaymentMethods(isTestingMode);
     console.log("Count:", methods.length);
     methods.forEach((m, i) => {
-      const title = PaymentMethodTitles[m.method] ?? m.method;
+      const title = m.method;
       const extra =
         "bPayNumber" in m && m.bPayNumber != null
           ? ` bPay: ${m.bPayNumber}`
