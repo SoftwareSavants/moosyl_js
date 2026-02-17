@@ -98,9 +98,9 @@ This endpoint requires your **secret API key** and must be called from your back
 ```javascript
 import { Moosyl } from "moosyl";
 
-const moosyl = new Moosyl("YOUR_PUBLISHABLE_API_KEY");
+const moosyl = new Moosyl("YOUR_SECRET_API_KEY");
 
-const response = await moosyl.createCheckoutSession("YOUR_SECRET_API_KEY", {
+const response = await moosyl.createCheckoutSession({
   paymentRequestId: "123e4567-e89b-12d3-a456-426614174000",
   transactionId: "your-unique-transaction-id",
   amount: 5000,
@@ -195,7 +195,7 @@ To only verify without parsing: `moosyl.verifyWebhookSignature(rawBody, signatur
 ## Configuration
 
 - **API key**: Use your **publishable** API key when creating `new Moosyl(apiKey)`. Get keys at [moosyl.com](https://moosyl.com).
-- **Secret API key**: `createCheckoutSession()` requires your **secret** key and should run only on trusted backend infrastructure.
+- **Secret API key**: `createCheckoutSession()` uses the key passed to `new Moosyl(apiKey)`. For this method, initialize Moosyl with your **secret** key and run only on trusted backend infrastructure.
 - **Webhook secret**: Use your webhook signing secret with `moosyl.constructWebhookEvent()` / `moosyl.verifyWebhookSignature()`; keep it server-side only.
 - **Testing mode**: Pass `true` to `moosyl.getPaymentMethods(true)` for test configuration.
 

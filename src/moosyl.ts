@@ -25,6 +25,7 @@ export class Moosyl {
   private readonly getPaymentRequestService: GetPaymentRequestService;
   private readonly getPaymentService: GetPaymentService;
   private readonly payService: PayService;
+  private readonly createCheckoutSessionService: CreateCheckoutSessionService;
 
   /**
    * @param apiKey - Your Moosyl publishable API key
@@ -34,6 +35,7 @@ export class Moosyl {
     this.getPaymentRequestService = new GetPaymentRequestService(apiKey);
     this.getPaymentService = new GetPaymentService(apiKey);
     this.payService = new PayService(apiKey);
+    this.createCheckoutSessionService = new CreateCheckoutSessionService(apiKey);
   }
 
   /**
@@ -87,16 +89,15 @@ export class Moosyl {
 
   /**
    * Creates a checkout session.
-   * This endpoint requires your Moosyl secret API key and must be called from your backend.
-   * @param secretApiKey - Your Moosyl secret API key
+   * Uses the API key passed to the constructor.
+   * This endpoint requires a secret API key and must be called from your backend.
    * @param request - Checkout session payload
    * @returns Checkout session and checkout URL
    */
   createCheckoutSession(
-    secretApiKey: string,
     request: CreateCheckoutSessionRequest,
   ): Promise<CreateCheckoutSessionResponse> {
-    return new CreateCheckoutSessionService(secretApiKey).create(request);
+    return this.createCheckoutSessionService.create(request);
   }
 
   /**
