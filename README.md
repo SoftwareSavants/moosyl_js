@@ -12,6 +12,7 @@ The **Moosyl JavaScript SDK** helps you integrate payment solutions with Maurita
 - **Payment request**: Get payment request details by transaction ID.
 - **Pay**: Process payments (e.g. Bankily).
 - **Checkout session**: Create a hosted checkout session from your backend.
+- **Webhook verification**: Verify webhook signatures (HMAC-SHA256) like Stripe.
 - **Lightweight**: No UI; use your own front end or backend flows.
 - **ESM**: Native ES modules (`import`).
 
@@ -148,12 +149,54 @@ await moosyl.pay(
 );
 ```
 
+### Verify webhooks
+
+Use the **raw request body** (before JSON parsing) and the `x-webhook-signature` header. Requires your **webhook secret** (server-side only). `constructWebhookEvent` returns a type-safe `{ event, data }` so `data` is narrowed by `event`.
+
+```javascript
+import { Moosyl, WebhookSignatureError } from "moosyl";
+
+const moosyl = new Moosyl("YOUR_PUBLISHABLE_API_KEY");
+
+app.post("/webhook", express.raw({ type: "application/json" }), (req, res) => {
+  const signature = req.headers["x-webhook-signature"];
+  const rawBody = req.body;
+
+  try {
+    const { event, data } = moosyl.constructWebhookEvent(
+      rawBody,
+      signature,
+      process.env.WEBHOOK_SECRET,
+    );
+    switch (event) {
+      case "payment-created":
+      case "payment-updated":
+        handlePayment(data);
+        break;
+      case "payment-request-created":
+      case "payment-request-updated":
+        handlePaymentRequest(data);
+        break;
+    }
+    res.json({ received: true });
+  } catch (e) {
+    if (e instanceof WebhookSignatureError) {
+      return res.status(401).json({ error: "Invalid signature" });
+    }
+    throw e;
+  }
+});
+```
+
+To only verify without parsing: `moosyl.verifyWebhookSignature(rawBody, signature, secret)` returns `true` or `false`.
+
 ---
 
 ## Configuration
 
 - **API key**: Use your **publishable** API key when creating `new Moosyl(apiKey)`. Get keys at [moosyl.com](https://moosyl.com).
 - **Secret API key**: `createCheckoutSession()` requires your **secret** key and should run only on trusted backend infrastructure.
+- **Webhook secret**: Use your webhook signing secret with `moosyl.constructWebhookEvent()` / `moosyl.verifyWebhookSignature()`; keep it server-side only.
 - **Testing mode**: Pass `true` to `moosyl.getPaymentMethods(true)` for test configuration.
 
 ---

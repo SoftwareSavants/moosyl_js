@@ -3,6 +3,10 @@ import { GetPaymentRequestService } from "./services/get-payment-request-service
 import { GetPaymentService } from "./services/get-payment.js";
 import { PayService } from "./services/pay-service.js";
 import { CreateCheckoutSessionService } from "./services/create-checkout-session-service.js";
+import {
+  verifyWebhookSignature as verifyWebhookSignatureImpl,
+  constructWebhookEvent as constructWebhookEventImpl,
+} from "./helpers/webhook.js";
 import type { PaymentMethod } from "./models/payment-method-model.js";
 import type { PaymentRequestModel } from "./models/payment-request-model.js";
 import type { FetcherResponse } from "./helpers/fetcher.js";
@@ -10,6 +14,7 @@ import type {
   CreateCheckoutSessionRequest,
   CreateCheckoutSessionResponse,
 } from "./models/checkout-session-model.js";
+import type { WebhookEventMap } from "./models/webhook-event-types.js";
 
 /**
  * Main Moosyl SDK client. Create an instance with your publishable API key,
@@ -92,5 +97,30 @@ export class Moosyl {
     request: CreateCheckoutSessionRequest,
   ): Promise<CreateCheckoutSessionResponse> {
     return new CreateCheckoutSessionService(secretApiKey).create(request);
+  }
+
+  /**
+   * Verifies the webhook signature (HMAC-SHA256). Use the raw request body and
+   * the `x-webhook-signature` header. Requires your webhook secret (server-side only).
+   */
+  verifyWebhookSignature(
+    payload: string | Buffer,
+    signature: string | undefined | null,
+    secret: string,
+  ): boolean {
+    return verifyWebhookSignatureImpl(payload, signature, secret);
+  }
+
+  /**
+   * Verifies the webhook signature and parses the payload into a type-safe { event, data }.
+   * Throws WebhookSignatureError if the signature is invalid or the event is unknown.
+   * Use the raw request body; do not use a body that has been parsed as JSON.
+   */
+  constructWebhookEvent(
+    payload: string | Buffer,
+    signature: string | undefined | null,
+    secret: string,
+  ): WebhookEventMap {
+    return constructWebhookEventImpl(payload, signature, secret);
   }
 }

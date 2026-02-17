@@ -8,3 +8,11 @@ export {
   CheckoutSessionModel,
   CreateCheckoutSessionResponse,
 } from "./src/models/checkout-session-model.js";
+export { WebhookSignatureError } from "./src/helpers/webhook.js";
+export type {
+  WebhookEventMap,
+  WebhookEventName,
+  PaymentWebhookData,
+  PaymentRequestWebhookData,
+  PaymentRequestNested,
+} from "./src/models/webhook-event-types.js";
