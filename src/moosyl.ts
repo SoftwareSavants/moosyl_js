@@ -2,9 +2,14 @@ import { GetPaymentMethodsService } from "./services/get-payment-methods-service
 import { GetPaymentRequestService } from "./services/get-payment-request-service.js";
 import { GetPaymentService } from "./services/get-payment.js";
 import { PayService } from "./services/pay-service.js";
+import { CreateCheckoutSessionService } from "./services/create-checkout-session-service.js";
 import type { PaymentMethod } from "./models/payment-method-model.js";
 import type { PaymentRequestModel } from "./models/payment-request-model.js";
 import type { FetcherResponse } from "./helpers/fetcher.js";
+import type {
+  CreateCheckoutSessionRequest,
+  CreateCheckoutSessionResponse,
+} from "./models/checkout-session-model.js";
 
 /**
  * Main Moosyl SDK client. Create an instance with your publishable API key,
@@ -73,5 +78,19 @@ export class Moosyl {
       passCode,
       paymentMethodId,
     );
+  }
+
+  /**
+   * Creates a checkout session.
+   * This endpoint requires your Moosyl secret API key and must be called from your backend.
+   * @param secretApiKey - Your Moosyl secret API key
+   * @param request - Checkout session payload
+   * @returns Checkout session and checkout URL
+   */
+  createCheckoutSession(
+    secretApiKey: string,
+    request: CreateCheckoutSessionRequest,
+  ): Promise<CreateCheckoutSessionResponse> {
+    return new CreateCheckoutSessionService(secretApiKey).create(request);
   }
 }

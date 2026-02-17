@@ -4,7 +4,7 @@ import { AppException, AppExceptionCode } from "./exceptions.js";
  * Static API base URL and endpoint builders.
  */
 export const Endpoints = {
-  baseUrl: "https://moosyl.moosyl.workers.dev",
+  baseUrl: "https://api.moosyl.com",
 
   paymentMethods(isTestingMode: boolean): string {
     return `${this.baseUrl}/configuration?isTestingMode=${isTestingMode}`;
@@ -20,6 +20,10 @@ export const Endpoints = {
 
   getPayment(id: string): string {
     return `${this.baseUrl}/payment/${id}`;
+  },
+
+  get checkoutSession(): string {
+    return `${this.baseUrl}/checkout-session`;
   },
 };
 
@@ -50,7 +54,7 @@ export class Fetcher {
 
   private async fromResponse(
     response: Response,
-    raw = false,
+    raw = false
   ): Promise<FetcherResponse> {
     const url = response.url ?? "";
     const status = response.status;
@@ -87,7 +91,7 @@ export class Fetcher {
 
   async get(
     url: string,
-    options: { raw?: boolean } = {},
+    options: { raw?: boolean } = {}
   ): Promise<FetcherResponse> {
     const { raw = false } = options;
     try {
@@ -107,7 +111,7 @@ export class Fetcher {
 
   async post(
     url: string,
-    body?: Record<string, unknown>,
+    body?: Record<string, unknown>
   ): Promise<FetcherResponse> {
     try {
       const response = await fetch(url, {
@@ -154,14 +158,14 @@ export class FetcherResponse {
       typeof data === "string"
         ? data
         : data && typeof data === "object" && "code" in data
-          ? (data as { code: string }).code
-          : AppExceptionCode.unknown;
+        ? (data as { code: string }).code
+        : AppExceptionCode.unknown;
     const message =
       typeof data === "string"
         ? data
         : data && typeof data === "object" && "message" in data
-          ? (data as { message: string }).message
-          : "An error occurred";
+        ? (data as { message: string }).message
+        : "An error occurred";
     return new AppException({
       code,
       message: String(message),

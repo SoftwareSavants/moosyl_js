@@ -3,3 +3,8 @@
  */
 
 export { Moosyl } from "./src/moosyl.js";
+export type { CreateCheckoutSessionRequest } from "./src/models/checkout-session-model.js";
+export {
+  CheckoutSessionModel,
+  CreateCheckoutSessionResponse,
+} from "./src/models/checkout-session-model.js";

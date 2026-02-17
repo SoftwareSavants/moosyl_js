@@ -11,6 +11,7 @@ The **Moosyl JavaScript SDK** helps you integrate payment solutions with Maurita
 - **Payment methods**: Fetch available payment methods (including testing mode).
 - **Payment request**: Get payment request details by transaction ID.
 - **Pay**: Process payments (e.g. Bankily).
+- **Checkout session**: Create a hosted checkout session from your backend.
 - **Lightweight**: No UI; use your own front end or backend flows.
 - **ESM**: Native ES modules (`import`).
 
@@ -40,7 +41,7 @@ const moosyl = new Moosyl("YOUR_PUBLISHABLE_API_KEY");
 
 ## Usage
 
-All functionality is available on the **Moosyl** instance: `moosyl.getPaymentMethods()`, `moosyl.getPaymentRequest()`, `moosyl.pay()`.
+All functionality is available on the **Moosyl** instance: `moosyl.getPaymentMethods()`, `moosyl.getPaymentRequest()`, `moosyl.pay()`, `moosyl.createCheckoutSession()`.
 
 ### Fetch payment methods
 
@@ -89,6 +90,47 @@ curl -X POST https://api.moosyl.com/payment-request \
 
 Once created, use the returned **transactionId** with `moosyl.getPaymentRequest()` and your payment flow.
 
+### Create checkout session (backend only)
+
+This endpoint requires your **secret API key** and must be called from your backend only. Do not expose your secret key in frontend code.
+
+```javascript
+import { Moosyl } from "moosyl";
+
+const moosyl = new Moosyl("YOUR_PUBLISHABLE_API_KEY");
+
+const response = await moosyl.createCheckoutSession("YOUR_SECRET_API_KEY", {
+  paymentRequestId: "123e4567-e89b-12d3-a456-426614174000",
+  transactionId: "your-unique-transaction-id",
+  amount: 5000,
+  phoneNumber: "+22212345678",
+  successUrl: "https://example.com/success",
+  cancelUrl: "https://example.com/cancel",
+  expiresInMinutes: 5,
+});
+
+console.log(response.data.id);
+console.log(response.checkoutUrl);
+```
+
+Equivalent cURL:
+
+```bash
+curl https://api.moosyl.com/checkout-session \
+  --request POST \
+  --header 'Authorization: YOUR_SECRET_API_KEY' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "paymentRequestId": "",
+  "transactionId": "",
+  "amount": 0,
+  "phoneNumber": "",
+  "successUrl": "",
+  "cancelUrl": "",
+  "expiresInMinutes": 5
+}'
+```
+
 ### Process payment
 
 For payment methods (e.g. Bankily):
@@ -111,6 +153,7 @@ await moosyl.pay(
 ## Configuration
 
 - **API key**: Use your **publishable** API key when creating `new Moosyl(apiKey)`. Get keys at [moosyl.com](https://moosyl.com).
+- **Secret API key**: `createCheckoutSession()` requires your **secret** key and should run only on trusted backend infrastructure.
 - **Testing mode**: Pass `true` to `moosyl.getPaymentMethods(true)` for test configuration.
 
 ---
