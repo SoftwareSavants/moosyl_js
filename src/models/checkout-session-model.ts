@@ -1,12 +1,26 @@
-export interface CreateCheckoutSessionRequest {
-  paymentRequestId: string;
-  transactionId: string;
-  amount: number;
-  phoneNumber: string;
+interface CreateCheckoutSessionRequestBase {
   successUrl: string;
   cancelUrl: string;
   expiresInMinutes: number;
 }
+
+type CreateCheckoutSessionByPaymentRequestId = {
+  paymentRequestId: string;
+  transactionId?: string;
+  amount?: number;
+  phoneNumber?: string;
+};
+
+type CreateCheckoutSessionByTransaction = {
+  paymentRequestId?: never;
+  transactionId: string;
+  amount: number;
+  phoneNumber: string;
+};
+
+export type CreateCheckoutSessionRequest =
+  & CreateCheckoutSessionRequestBase
+  & (CreateCheckoutSessionByPaymentRequestId | CreateCheckoutSessionByTransaction);
 
 export class CheckoutSessionModel {
   readonly id: string;
