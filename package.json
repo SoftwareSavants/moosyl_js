@@ -1,5 +1,5 @@
 {
-  "name": "moosyl",
+  "name": "moosyl-sdk",
   "version": "1.0.9",
   "description": "integrating payment solutions with Mauritania's popular banking apps",
   "type": "module",
