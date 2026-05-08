@@ -42,14 +42,38 @@ export interface PaymentRequestWebhookData {
   [key: string]: unknown;
 }
 
+export interface SubscriptionWebhookData {
+  id: string;
+  organizationId: string;
+  customerId: string;
+  priceId: string;
+  status:
+    | "trialing"
+    | "active"
+    | "past_due"
+    | "paused"
+    | "cancelled"
+    | "expired"
+    | "pending_cancellation";
+  nextBillingDate: string | null;
+  startedAt: string | null;
+  cancelledAt: string | null;
+  expiresAt: string | null;
+  [key: string]: unknown;
+}
+
 export type WebhookEventName =
   | "payment-request-created"
   | "payment-request-updated"
   | "payment-created"
-  | "payment-updated";
+  | "payment-updated"
+  | "subscription-created"
+  | "subscription-updated";
 
 export type WebhookEventMap =
   | { event: "payment-created"; data: PaymentWebhookData }
   | { event: "payment-updated"; data: PaymentWebhookData }
   | { event: "payment-request-created"; data: PaymentRequestWebhookData }
-  | { event: "payment-request-updated"; data: PaymentRequestWebhookData };
+  | { event: "payment-request-updated"; data: PaymentRequestWebhookData }
+  | { event: "subscription-created"; data: SubscriptionWebhookData }
+  | { event: "subscription-updated"; data: SubscriptionWebhookData };

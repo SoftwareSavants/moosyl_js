@@ -3,6 +3,10 @@ import { GetPaymentRequestService } from "./services/get-payment-request-service
 import { GetPaymentService } from "./services/get-payment.js";
 import { PayService } from "./services/pay-service.js";
 import { CreateCheckoutSessionService } from "./services/create-checkout-session-service.js";
+import { ProductService } from "./services/product-service.js";
+import { CustomerService } from "./services/customer-service.js";
+import { SubscriptionService } from "./services/subscription-service.js";
+import { InvoiceService } from "./services/invoice-service.js";
 import {
   verifyWebhookSignature as verifyWebhookSignatureImpl,
   constructWebhookEvent as constructWebhookEventImpl,
@@ -15,6 +19,19 @@ import type {
   CreateCheckoutSessionResponse,
 } from "./models/checkout-session-model.js";
 import type { WebhookEventMap } from "./models/webhook-event-types.js";
+import type {
+  ProductModel,
+  ProductWithPricesModel,
+} from "./models/product-model.js";
+import type { CustomerModel } from "./models/customer-model.js";
+import type {
+  CreateSubscriptionByExternalUserRequest,
+  CreateSubscriptionRequest,
+  SubscriptionModel,
+  SubscriptionStatus,
+} from "./models/subscription-model.js";
+import type { InvoiceModel } from "./models/invoice-model.js";
+import type { PaginatedResponse } from "./models/pagination-model.js";
 
 /**
  * Main Moosyl SDK client. Create an instance with your publishable API key,
@@ -26,6 +43,10 @@ export class Moosyl {
   private readonly getPaymentService: GetPaymentService;
   private readonly payService: PayService;
   private readonly createCheckoutSessionService: CreateCheckoutSessionService;
+  private readonly productService: ProductService;
+  private readonly customerService: CustomerService;
+  private readonly subscriptionService: SubscriptionService;
+  private readonly invoiceService: InvoiceService;
 
   /**
    * @param apiKey - Your Moosyl publishable API key
@@ -36,6 +57,10 @@ export class Moosyl {
     this.getPaymentService = new GetPaymentService(apiKey);
     this.payService = new PayService(apiKey);
     this.createCheckoutSessionService = new CreateCheckoutSessionService(apiKey);
+    this.productService = new ProductService(apiKey);
+    this.customerService = new CustomerService(apiKey);
+    this.subscriptionService = new SubscriptionService(apiKey);
+    this.invoiceService = new InvoiceService(apiKey);
   }
 
   /**
@@ -98,6 +123,111 @@ export class Moosyl {
     request: CreateCheckoutSessionRequest,
   ): Promise<CreateCheckoutSessionResponse> {
     return this.createCheckoutSessionService.create(request);
+  }
+
+  // -------- Products (require secret API key) --------
+
+  listProducts(params?: {
+    id?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<PaginatedResponse<ProductWithPricesModel>> {
+    return this.productService.list(params);
+  }
+
+  getProduct(id: string): Promise<ProductWithPricesModel> {
+    return this.productService.get(id);
+  }
+
+  createProduct(data: {
+    name: string;
+    description?: string;
+  }): Promise<ProductModel> {
+    return this.productService.create(data);
+  }
+
+  updateProduct(
+    id: string,
+    data: { name?: string; description?: string; active?: boolean },
+  ): Promise<ProductModel> {
+    return this.productService.update(id, data);
+  }
+
+  archiveProduct(id: string): Promise<{ success: boolean }> {
+    return this.productService.archive(id);
+  }
+
+  // -------- Customers --------
+
+  listCustomers(params?: {
+    id?: string;
+    externalUserId?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<PaginatedResponse<CustomerModel>> {
+    return this.customerService.list(params);
+  }
+
+  createCustomer(data: {
+    externalUserId: string;
+    phone?: string;
+  }): Promise<CustomerModel> {
+    return this.customerService.create(data);
+  }
+
+  updateCustomer(
+    id: string,
+    data: { externalUserId?: string; phone?: string },
+  ): Promise<CustomerModel> {
+    return this.customerService.update(id, data);
+  }
+
+  // -------- Subscriptions --------
+
+  listSubscriptions(params?: {
+    status?: SubscriptionStatus;
+    page?: number;
+    limit?: number;
+  }): Promise<PaginatedResponse<SubscriptionModel>> {
+    return this.subscriptionService.list(params);
+  }
+
+  getSubscription(id: string): Promise<SubscriptionModel> {
+    return this.subscriptionService.get(id);
+  }
+
+  createSubscription(
+    data: CreateSubscriptionRequest,
+  ): Promise<SubscriptionModel> {
+    return this.subscriptionService.create(data);
+  }
+
+  createSubscriptionByExternalUser(
+    data: CreateSubscriptionByExternalUserRequest,
+  ): Promise<SubscriptionModel> {
+    return this.subscriptionService.createByExternalUser(data);
+  }
+
+  getSubscriptionByExternalUser(
+    externalUserId: string,
+  ): Promise<SubscriptionModel> {
+    return this.subscriptionService.getByExternalUser(externalUserId);
+  }
+
+  cancelSubscription(id: string): Promise<SubscriptionModel> {
+    return this.subscriptionService.cancel(id);
+  }
+
+  // -------- Invoices --------
+
+  listInvoices(params?: {
+    id?: string;
+    externalUserId?: string;
+    subscriptionId?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<PaginatedResponse<InvoiceModel>> {
+    return this.invoiceService.list(params);
   }
 
   /**
