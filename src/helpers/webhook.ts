@@ -10,6 +10,8 @@ const WEBHOOK_EVENT_NAMES: WebhookEventName[] = [
   "payment-request-updated",
   "payment-created",
   "payment-updated",
+  "subscription-created",
+  "subscription-updated",
 ];
 
 export class WebhookSignatureError extends Error {

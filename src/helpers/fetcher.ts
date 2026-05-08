@@ -3,6 +3,21 @@ import { AppException, AppExceptionCode } from "./exceptions.js";
 /**
  * Static API base URL and endpoint builders.
  */
+function buildQueryString(params?: Record<string, unknown>): string {
+  if (!params) return "";
+  const entries = Object.entries(params).filter(
+    ([, v]) => v !== undefined && v !== null
+  );
+  if (entries.length === 0) return "";
+  const search = entries
+    .map(
+      ([k, v]) =>
+        `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`
+    )
+    .join("&");
+  return `?${search}`;
+}
+
 export const Endpoints = {
   baseUrl: "https://api.moosyl.com",
 
@@ -24,6 +39,47 @@ export const Endpoints = {
 
   get checkoutSession(): string {
     return `${this.baseUrl}/checkout-session`;
+  },
+
+  // Products
+  products(query?: Record<string, unknown>): string {
+    return `${this.baseUrl}/products${buildQueryString(query)}`;
+  },
+  product(id: string): string {
+    return `${this.baseUrl}/products/${id}`;
+  },
+  archiveProduct(id: string): string {
+    return `${this.baseUrl}/products/${id}/archive`;
+  },
+
+  // Customers
+  customers(query?: Record<string, unknown>): string {
+    return `${this.baseUrl}/customers${buildQueryString(query)}`;
+  },
+  customer(id: string): string {
+    return `${this.baseUrl}/customers/${id}`;
+  },
+
+  // Subscriptions
+  subscriptions(query?: Record<string, unknown>): string {
+    return `${this.baseUrl}/subscriptions${buildQueryString(query)}`;
+  },
+  subscription(id: string): string {
+    return `${this.baseUrl}/subscriptions/${id}`;
+  },
+  subscriptionByExternalUserCreate(): string {
+    return `${this.baseUrl}/subscriptions/by-external-user`;
+  },
+  subscriptionByExternalUser(externalUserId: string): string {
+    return `${this.baseUrl}/subscriptions/by-external-user/${externalUserId}`;
+  },
+  cancelSubscription(id: string): string {
+    return `${this.baseUrl}/subscriptions/${id}/cancel`;
+  },
+
+  // Invoices
+  invoices(query?: Record<string, unknown>): string {
+    return `${this.baseUrl}/invoices${buildQueryString(query)}`;
   },
 };
 
@@ -116,6 +172,26 @@ export class Fetcher {
     try {
       const response = await fetch(url, {
         method: "POST",
+        headers: this.headers,
+        body: body ? JSON.stringify(body) : undefined,
+        signal: AbortSignal.timeout(60_000),
+      });
+      const res = await this.fromResponse(response);
+      if (!res.success) throw res.toException();
+      return res;
+    } catch (err) {
+      if (err instanceof AppException) throw err;
+      throw this.wrapFetchError(err);
+    }
+  }
+
+  async patch(
+    url: string,
+    body?: Record<string, unknown>
+  ): Promise<FetcherResponse> {
+    try {
+      const response = await fetch(url, {
+        method: "PATCH",
         headers: this.headers,
         body: body ? JSON.stringify(body) : undefined,
         signal: AbortSignal.timeout(60_000),
