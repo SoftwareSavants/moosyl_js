@@ -1,4 +1,5 @@
-import { Endpoints, Fetcher, FetcherResponse } from "../helpers/fetcher.js";
+import { createEndpoints, Fetcher, FetcherResponse } from "../helpers/fetcher.js";
+import type { ClientOptions } from "../helpers/fetcher.js";
 import {
   ProductModel,
   ProductWithPricesModel,
@@ -43,15 +44,22 @@ function unwrapList(result: FetcherResponse): {
  * Service for managing products and their prices.
  */
 export class ProductService {
-  constructor(public readonly secretApiKey: string) {}
+  constructor(
+    public readonly secretApiKey: string,
+    private readonly options: ClientOptions = {},
+  ) {}
+
+  private get endpoints() {
+    return createEndpoints(this.options.baseUrl);
+  }
 
   async list(params?: {
     id?: string;
     page?: number;
     limit?: number;
   }): Promise<PaginatedResponse<ProductWithPricesModel>> {
-    const result = await new Fetcher(this.secretApiKey).get(
-      Endpoints.products(params)
+    const result = await new Fetcher(this.secretApiKey, this.options).get(
+      this.endpoints.products(params)
     );
     const { list, pagination } = unwrapList(result);
     return {
@@ -61,8 +69,8 @@ export class ProductService {
   }
 
   async get(id: string): Promise<ProductWithPricesModel> {
-    const result = await new Fetcher(this.secretApiKey).get(
-      Endpoints.product(id)
+    const result = await new Fetcher(this.secretApiKey, this.options).get(
+      this.endpoints.product(id)
     );
     return ProductWithPricesModel.fromMap(unwrapData(result));
   }
@@ -71,8 +79,8 @@ export class ProductService {
     name: string;
     description?: string;
   }): Promise<ProductModel> {
-    const result = await new Fetcher(this.secretApiKey).post(
-      Endpoints.products(),
+    const result = await new Fetcher(this.secretApiKey, this.options).post(
+      this.endpoints.products(),
       data as unknown as Record<string, unknown>
     );
     return ProductModel.fromMap(unwrapData(result));
@@ -82,16 +90,16 @@ export class ProductService {
     id: string,
     data: { name?: string; description?: string; active?: boolean }
   ): Promise<ProductModel> {
-    const result = await new Fetcher(this.secretApiKey).patch(
-      Endpoints.product(id),
+    const result = await new Fetcher(this.secretApiKey, this.options).patch(
+      this.endpoints.product(id),
       data as unknown as Record<string, unknown>
     );
     return ProductModel.fromMap(unwrapData(result));
   }
 
   async archive(id: string): Promise<{ success: boolean }> {
-    const result = await new Fetcher(this.secretApiKey).patch(
-      Endpoints.archiveProduct(id)
+    const result = await new Fetcher(this.secretApiKey, this.options).patch(
+      this.endpoints.archiveProduct(id)
     );
     const body = (result.data as Record<string, unknown>) ?? {};
     return { success: Boolean(body.success ?? result.success) };

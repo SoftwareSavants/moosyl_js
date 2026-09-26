@@ -18,70 +18,100 @@ function buildQueryString(params?: Record<string, unknown>): string {
   return `?${search}`;
 }
 
-export const Endpoints = {
-  baseUrl: "https://api.moosyl.com",
+/** Default Moosyl API base URL. */
+export const DEFAULT_BASE_URL = "https://api.moosyl.com";
 
-  paymentMethods(isTestingMode: boolean): string {
-    return `${this.baseUrl}/configuration?isTestingMode=${isTestingMode}`;
-  },
+/** Default request timeout (ms). Requests taking longer fail with code `timeout`. */
+export const DEFAULT_TIMEOUT_MS = 60_000;
 
-  get pay(): string {
-    return `${this.baseUrl}/payment`;
-  },
+/**
+ * Options shared by the client, its services and the fetcher.
+ */
+export interface ClientOptions {
+  /** API base URL. Defaults to `https://api.moosyl.com`. Trailing slashes are ignored. */
+  baseUrl?: string;
+  /** Per-request timeout in milliseconds. Defaults to 60 000. */
+  timeoutMs?: number;
+}
 
-  paymentRequest(id: string): string {
-    return `${this.baseUrl}/payment-request/by-transaction/${id}`;
-  },
+/** Builds the endpoint URLs for a given base URL. */
+export function createEndpoints(baseUrl: string = DEFAULT_BASE_URL) {
+  return {
+    baseUrl: baseUrl.replace(/\/+$/, ""),
 
-  getPayment(id: string): string {
-    return `${this.baseUrl}/payment/${id}`;
-  },
+    paymentMethods(isTestingMode?: boolean): string {
+      return `${this.baseUrl}/configuration${buildQueryString({ isTestingMode })}`;
+    },
 
-  get checkoutSession(): string {
-    return `${this.baseUrl}/checkout-session`;
-  },
+    get pay(): string {
+      return `${this.baseUrl}/payment`;
+    },
 
-  // Products
-  products(query?: Record<string, unknown>): string {
-    return `${this.baseUrl}/products${buildQueryString(query)}`;
-  },
-  product(id: string): string {
-    return `${this.baseUrl}/products/${id}`;
-  },
-  archiveProduct(id: string): string {
-    return `${this.baseUrl}/products/${id}/archive`;
-  },
+    paymentRequest(id: string): string {
+      return `${this.baseUrl}/payment-request/by-transaction/${id}`;
+    },
 
-  // Customers
-  customers(query?: Record<string, unknown>): string {
-    return `${this.baseUrl}/customers${buildQueryString(query)}`;
-  },
-  customer(id: string): string {
-    return `${this.baseUrl}/customers/${id}`;
-  },
+    getPayment(id: string): string {
+      return `${this.baseUrl}/payment/${id}`;
+    },
 
-  // Subscriptions
-  subscriptions(query?: Record<string, unknown>): string {
-    return `${this.baseUrl}/subscriptions${buildQueryString(query)}`;
-  },
-  subscription(id: string): string {
-    return `${this.baseUrl}/subscriptions/${id}`;
-  },
-  subscriptionByExternalUserCreate(): string {
-    return `${this.baseUrl}/subscriptions/by-external-user`;
-  },
-  subscriptionByExternalUser(externalUserId: string): string {
-    return `${this.baseUrl}/subscriptions/by-external-user/${externalUserId}`;
-  },
-  cancelSubscription(id: string): string {
-    return `${this.baseUrl}/subscriptions/${id}/cancel`;
-  },
+    paymentStatus(id: string): string {
+      return `${this.baseUrl}/payment/${encodeURIComponent(id)}/status`;
+    },
 
-  // Invoices
-  invoices(query?: Record<string, unknown>): string {
-    return `${this.baseUrl}/invoices${buildQueryString(query)}`;
-  },
-};
+    simulateTransfer(id: string): string {
+      return `${this.baseUrl}/payment/${encodeURIComponent(id)}/simulate-transfer`;
+    },
+
+    get checkoutSession(): string {
+      return `${this.baseUrl}/checkout-session`;
+    },
+
+    // Products
+    products(query?: Record<string, unknown>): string {
+      return `${this.baseUrl}/products${buildQueryString(query)}`;
+    },
+    product(id: string): string {
+      return `${this.baseUrl}/products/${id}`;
+    },
+    archiveProduct(id: string): string {
+      return `${this.baseUrl}/products/${id}/archive`;
+    },
+
+    // Customers
+    customers(query?: Record<string, unknown>): string {
+      return `${this.baseUrl}/customers${buildQueryString(query)}`;
+    },
+    customer(id: string): string {
+      return `${this.baseUrl}/customers/${id}`;
+    },
+
+    // Subscriptions
+    subscriptions(query?: Record<string, unknown>): string {
+      return `${this.baseUrl}/subscriptions${buildQueryString(query)}`;
+    },
+    subscription(id: string): string {
+      return `${this.baseUrl}/subscriptions/${id}`;
+    },
+    subscriptionByExternalUserCreate(): string {
+      return `${this.baseUrl}/subscriptions/by-external-user`;
+    },
+    subscriptionByExternalUser(externalUserId: string): string {
+      return `${this.baseUrl}/subscriptions/by-external-user/${externalUserId}`;
+    },
+    cancelSubscription(id: string): string {
+      return `${this.baseUrl}/subscriptions/${id}/cancel`;
+    },
+
+    // Invoices
+    invoices(query?: Record<string, unknown>): string {
+      return `${this.baseUrl}/invoices${buildQueryString(query)}`;
+    },
+  };
+}
+
+/** Endpoint URLs for the default base URL (kept for backward compatibility). */
+export const Endpoints = createEndpoints();
 
 function parseResponseBody(body: string): unknown {
   try {
@@ -92,13 +122,18 @@ function parseResponseBody(body: string): unknown {
 }
 
 /**
- * HTTP client for Moosyl API. Sends GET/POST with auth header.
+ * HTTP client for Moosyl API. Sends GET/POST/PATCH with the API key as the raw
+ * `Authorization` header. Every request is aborted after `timeoutMs`
+ * (default 60 s). Uses `AbortController` + `setTimeout` rather than
+ * `AbortSignal.timeout`, which React Native does not implement.
  */
 export class Fetcher {
   publishableApiKey: string;
+  readonly timeoutMs: number;
 
-  constructor(publishableApiKey: string) {
+  constructor(publishableApiKey: string, options: ClientOptions = {}) {
     this.publishableApiKey = publishableApiKey;
+    this.timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   }
 
   get headers(): Record<string, string> {
@@ -119,7 +154,13 @@ export class Fetcher {
     return new FetcherResponse({ url, status, data });
   }
 
-  private wrapFetchError(err: unknown): AppException {
+  private wrapFetchError(err: unknown, timedOut: boolean): AppException {
+    if (timedOut) {
+      return new AppException({
+        code: AppExceptionCode.timeout,
+        message: "Request timed out",
+      });
+    }
     if (err instanceof Error) {
       const name = (err as Error & { name?: string }).name;
       if (name === "AbortError") {
@@ -145,64 +186,55 @@ export class Fetcher {
     });
   }
 
-  async get(
+  private async request(
+    method: "GET" | "POST" | "PATCH",
     url: string,
-    options: { raw?: boolean } = {}
+    body?: Record<string, unknown>,
+    raw = false
   ): Promise<FetcherResponse> {
-    const { raw = false } = options;
+    const controller = new AbortController();
+    let timedOut = false;
+    const timer = setTimeout(() => {
+      timedOut = true;
+      controller.abort();
+    }, this.timeoutMs);
     try {
       const response = await fetch(url, {
-        method: "GET",
+        method,
         headers: this.headers,
-        signal: AbortSignal.timeout(60_000),
+        body: body ? JSON.stringify(body) : undefined,
+        signal: controller.signal,
       });
       const res = await this.fromResponse(response, raw);
       if (!res.success) throw res.toException();
       return res;
     } catch (err) {
       if (err instanceof AppException) throw err;
-      throw this.wrapFetchError(err);
+      throw this.wrapFetchError(err, timedOut);
+    } finally {
+      clearTimeout(timer);
     }
+  }
+
+  async get(
+    url: string,
+    options: { raw?: boolean } = {}
+  ): Promise<FetcherResponse> {
+    return this.request("GET", url, undefined, options.raw ?? false);
   }
 
   async post(
     url: string,
     body?: Record<string, unknown>
   ): Promise<FetcherResponse> {
-    try {
-      const response = await fetch(url, {
-        method: "POST",
-        headers: this.headers,
-        body: body ? JSON.stringify(body) : undefined,
-        signal: AbortSignal.timeout(60_000),
-      });
-      const res = await this.fromResponse(response);
-      if (!res.success) throw res.toException();
-      return res;
-    } catch (err) {
-      if (err instanceof AppException) throw err;
-      throw this.wrapFetchError(err);
-    }
+    return this.request("POST", url, body);
   }
 
   async patch(
     url: string,
     body?: Record<string, unknown>
   ): Promise<FetcherResponse> {
-    try {
-      const response = await fetch(url, {
-        method: "PATCH",
-        headers: this.headers,
-        body: body ? JSON.stringify(body) : undefined,
-        signal: AbortSignal.timeout(60_000),
-      });
-      const res = await this.fromResponse(response);
-      if (!res.success) throw res.toException();
-      return res;
-    } catch (err) {
-      if (err instanceof AppException) throw err;
-      throw this.wrapFetchError(err);
-    }
+    return this.request("PATCH", url, body);
   }
 }
 
@@ -233,8 +265,10 @@ export class FetcherResponse {
     const code =
       typeof data === "string"
         ? data
-        : data && typeof data === "object" && "code" in data
-        ? (data as { code: string }).code
+        : data &&
+          typeof data === "object" &&
+          (data as { code?: unknown }).code != null
+        ? String((data as { code: unknown }).code)
         : AppExceptionCode.unknown;
     const message =
       typeof data === "string"

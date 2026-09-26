@@ -1,4 +1,5 @@
-import { Endpoints, Fetcher, FetcherResponse } from "../helpers/fetcher.js";
+import { createEndpoints, Fetcher, FetcherResponse } from "../helpers/fetcher.js";
+import type { ClientOptions } from "../helpers/fetcher.js";
 import { InvoiceModel } from "../models/invoice-model.js";
 import {
   PaginatedResponse,
@@ -28,7 +29,14 @@ function unwrapList(result: FetcherResponse): {
  * Service for listing invoices.
  */
 export class InvoiceService {
-  constructor(public readonly secretApiKey: string) {}
+  constructor(
+    public readonly secretApiKey: string,
+    private readonly options: ClientOptions = {},
+  ) {}
+
+  private get endpoints() {
+    return createEndpoints(this.options.baseUrl);
+  }
 
   async list(params?: {
     id?: string;
@@ -37,8 +45,8 @@ export class InvoiceService {
     page?: number;
     limit?: number;
   }): Promise<PaginatedResponse<InvoiceModel>> {
-    const result = await new Fetcher(this.secretApiKey).get(
-      Endpoints.invoices(params)
+    const result = await new Fetcher(this.secretApiKey, this.options).get(
+      this.endpoints.invoices(params)
     );
     const { list, pagination } = unwrapList(result);
     return {
