@@ -125,6 +125,50 @@ test("getPaymentStatus() keeps referenceId and claimExpiresAt", async () => {
   assert.equal(r.claimExpiresAt, "2026-09-26T10:00:00Z");
 });
 
+test("pay() drops instructions that lack receivingPhone, paymentId or a finite amount", async () => {
+  const valid = {
+    kind: "gimtel_transfer",
+    receivingPhone: "22123456",
+    receivingBank: "BIM",
+    amount: "1500",
+    payerPhone: "33333333",
+    paymentId: "pay_1",
+    claimExpiresAt: "2026-09-26T10:00:00Z",
+  };
+  const variants = [
+    valid,
+    { ...valid, receivingPhone: "" },
+    { ...valid, paymentId: undefined },
+    { ...valid, amount: "abc" },
+    { ...valid, amount: null },
+    { ...valid, kind: "something_else" },
+  ];
+  let i = 0;
+  mockFetch(() => ({ body: { id: "pay_1", status: "pending", referenceId: null, instructions: variants[i++] } }));
+  const results = [];
+  for (let n = 0; n < variants.length; n++) {
+    results.push((await client().pay({ configurationId: "c", transactionId: "t", phoneNumber: "p" })).instructions);
+  }
+  assert.equal(results[0]?.amount, 1500, "numeric string amount is accepted");
+  assert.deepEqual(results.slice(1), [undefined, undefined, undefined, undefined, undefined]);
+});
+
+test("simulateTransfer() rejects an unexpected outcome instead of casting it", async () => {
+  for (const body of [{ outcome: "exploded" }, {}]) {
+    mockFetch(() => ({ body }));
+    await assert.rejects(client().simulateTransfer("p"), (err) => {
+      assert.ok(err instanceof AppException);
+      assert.match(err.message, /outcome/);
+      assert.equal(err.status, 200);
+      return true;
+    });
+  }
+  for (const outcome of ["matched", "unmatched", "skipped"]) {
+    mockFetch(() => ({ body: { outcome } }));
+    assert.equal((await client().simulateTransfer("p")).outcome, outcome);
+  }
+});
+
 test("simulateTransfer() POSTs to /payment/{id}/simulate-transfer", async () => {
   mockFetch(() => ({ body: { outcome: "matched" } }));
   const r = await client().simulateTransfer("pay_1");

@@ -1,7 +1,9 @@
 import { Fetcher, createEndpoints } from "../helpers/fetcher.js";
 import type { ClientOptions } from "../helpers/fetcher.js";
+import { AppException, AppExceptionCode } from "../helpers/exceptions.js";
 import {
   PaymentStatusResult,
+  SIMULATE_TRANSFER_OUTCOMES,
   SimulateTransferOutcome,
   SimulateTransferResult,
   paymentStatusResultFromMap,
@@ -35,6 +37,17 @@ export class PaymentStatusService {
       this.endpoints.simulateTransfer(paymentId),
     );
     const body = unwrapPaymentBody(result.data);
-    return { outcome: String(body.outcome ?? "") as SimulateTransferOutcome };
+    const outcome = body.outcome;
+    if (
+      typeof outcome !== "string" ||
+      !(SIMULATE_TRANSFER_OUTCOMES as readonly string[]).includes(outcome)
+    ) {
+      throw new AppException({
+        code: AppExceptionCode.unknown,
+        message: `Unexpected simulate-transfer outcome: ${String(outcome)}`,
+        status: result.status,
+      });
+    }
+    return { outcome: outcome as SimulateTransferOutcome };
   }
 }

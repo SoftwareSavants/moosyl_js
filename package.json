@@ -8,8 +8,27 @@
   "react-native": "dist/client.js",
   "exports": {
     ".": {
+      "react-native": {
+        "types": "./dist/client.d.ts",
+        "default": "./dist/client.js"
+      },
+      "workerd": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "worker": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "edge-light": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "browser": {
+        "types": "./dist/client.d.ts",
+        "default": "./dist/client.js"
+      },
       "types": "./dist/index.d.ts",
-      "react-native": "./dist/client.js",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
     },
@@ -50,6 +69,7 @@
   "homepage": "https://github.com/SoftwareSavants/moosyl_js#readme",
   "files": [
     "dist",
+    "client",
     "README.md",
     "CHANGELOG.md"
   ]

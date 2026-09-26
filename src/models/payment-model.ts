@@ -88,6 +88,12 @@ export interface PaymentStatusResult {
 
 export type SimulateTransferOutcome = "matched" | "unmatched" | "skipped";
 
+export const SIMULATE_TRANSFER_OUTCOMES: readonly SimulateTransferOutcome[] = [
+  "matched",
+  "unmatched",
+  "skipped",
+];
+
 /** Result of `simulateTransfer()` (sandbox only). */
 export interface SimulateTransferResult {
   outcome: SimulateTransferOutcome;
@@ -111,19 +117,39 @@ function optionalString(value: unknown): string | null {
   return value == null ? null : String(value);
 }
 
+function nonEmptyString(value: unknown): string | undefined {
+  if (typeof value === "number") return String(value);
+  return typeof value === "string" && value.trim() !== "" ? value : undefined;
+}
+
+/**
+ * Parses Gimtel instructions. Returns `undefined` unless the fields a payer
+ * needs are present: `receivingPhone`, `paymentId` and a finite `amount`
+ * (a numeric string is accepted).
+ */
 export function gimtelInstructionsFromMap(
   value: unknown,
 ): GimtelInstructions | undefined {
   if (!isRecord(value)) return undefined;
   if (value.kind != null && value.kind !== "gimtel_transfer") return undefined;
+  const receivingPhone = nonEmptyString(value.receivingPhone);
+  const paymentId = nonEmptyString(value.paymentId);
+  const amount =
+    typeof value.amount === "number"
+      ? value.amount
+      : typeof value.amount === "string" && value.amount.trim() !== ""
+        ? Number(value.amount)
+        : NaN;
+  if (!receivingPhone || !paymentId || !Number.isFinite(amount)) {
+    return undefined;
+  }
   return {
     kind: "gimtel_transfer",
-    receivingPhone: String(value.receivingPhone ?? ""),
+    receivingPhone,
     receivingBank: String(value.receivingBank ?? ""),
-    amount:
-      typeof value.amount === "number" ? value.amount : Number(value.amount),
+    amount,
     payerPhone: String(value.payerPhone ?? ""),
-    paymentId: String(value.paymentId ?? ""),
+    paymentId,
     claimExpiresAt: String(value.claimExpiresAt ?? ""),
   };
 }

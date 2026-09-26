@@ -37,6 +37,7 @@ export { PaymentRequestModel } from "./src/models/payment-request-model.js";
 // Payments / Gimtel
 export {
   GIMTEL_PAYMENT_STATUSES,
+  SIMULATE_TRANSFER_OUTCOMES,
   gimtelPaymentStatusFromString,
 } from "./src/models/payment-model.js";
 export type {

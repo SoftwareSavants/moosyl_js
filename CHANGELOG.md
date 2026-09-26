@@ -17,7 +17,11 @@ Additive release: existing code keeps working unchanged.
   - `getPaymentStatus(paymentId)` returns `PaymentStatusResult`
     (`id`, `status`, `rawStatus`, `referenceId`, `claimExpiresAt`). Unknown
     statuses come back as `"pending"`; the original string is in `rawStatus`.
-  - `simulateTransfer(paymentId)`: sandbox only, returns `{ outcome }`.
+  - `simulateTransfer(paymentId)`: sandbox only, returns `{ outcome }`. It
+    rejects with `AppException` if the backend sends an outcome other than
+    `matched` / `unmatched` / `skipped`.
+  - `instructions` is only set when `receivingPhone`, `paymentId` and a finite
+    `amount` are present.
   - New types: `GimtelInstructions`, `GimtelPaymentStatus`, `PayParams`,
     `PayResult`, `PaymentStatusResult`, `SimulateTransferResult`,
     `SimulateTransferOutcome`, `PaymentMethodIntegration`.
@@ -28,8 +32,12 @@ Additive release: existing code keeps working unchanged.
   as before.
 - **React Native / browser entry `moosyl-sdk/client`.** It has the whole API
   client (`Moosyl`, also exported as `MoosylClient`) without the webhook
-  helpers, so it never imports `node:crypto`. Metro resolves `moosyl-sdk` to
-  this entry through the `react-native` export condition and field.
+  helpers, so it never imports `node:crypto`. `moosyl-sdk` itself resolves
+  to this entry, types included, under the `react-native` and `browser`
+  export conditions (and the top-level `react-native` field).
+  Cloudflare Workers (`workerd`/`worker`) and Vercel Edge (`edge-light`) keep
+  the full entry. A `client/package.json` stub makes `moosyl-sdk/client` work
+  on Metro versions without package-exports support.
 - Exports that were missing from the root entry: `AppException`,
   `AppExceptionCode`, `PaymentMethod`, `PaymentMethodTypes`,
   `PaymentMethodTitles`, `PaymentRequestModel`, `FetcherResponse`.

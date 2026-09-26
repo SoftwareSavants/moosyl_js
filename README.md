@@ -162,7 +162,7 @@ With Gimtel methods (`method.integration === "gimtel"`) the payer sends a bank t
 3. **Poll `getPaymentStatus()` about every 4 seconds** while the payer is on the payment screen. Each call is a heartbeat: the payment stops being claimable about 10 minutes after the last poll (see `claimExpiresAt`). Stop when the status is `completed` (success) or `expired` / `cancelled` / `failed`.
 
 ```javascript
-import { Moosyl } from "moosyl-sdk";
+import { Moosyl, AppException } from "moosyl-sdk";
 
 const moosyl = new Moosyl("YOUR_PUBLISHABLE_API_KEY");
 
@@ -173,21 +173,36 @@ const payment = await moosyl.pay({
   // no passCode for Gimtel
 });
 
+if (!payment.instructions) {
+  // Not a Gimtel method (or an unexpected response): handle payment.status instead.
+  throw new Error(`No transfer instructions (status: ${payment.status})`);
+}
 const { receivingPhone, receivingBank, amount, claimExpiresAt } = payment.instructions;
 showInstructions({ receivingPhone, receivingBank, amount, claimExpiresAt });
 
+let expiresAt = Date.parse(claimExpiresAt);
 const timer = setInterval(async () => {
+  if (Date.now() > expiresAt) {
+    clearInterval(timer);
+    return onFailed("expired");
+  }
   try {
-    const { status } = await moosyl.getPaymentStatus(payment.id);
-    if (status === "completed") {
+    const res = await moosyl.getPaymentStatus(payment.id);
+    if (res.claimExpiresAt) expiresAt = Date.parse(res.claimExpiresAt); // heartbeats extend it
+    if (res.status === "completed") {
       clearInterval(timer);
       onPaid();
-    } else if (status !== "pending") {
+    } else if (res.status !== "pending") {
       clearInterval(timer);
-      onFailed(status); // "expired" | "cancelled" | "failed"
+      onFailed(res.status); // "expired" | "cancelled" | "failed"
     }
   } catch (e) {
-    // Network errors are transient: keep polling.
+    if (e instanceof AppException && e.isClientError) {
+      // 4xx (bad key, unknown payment...): retrying will not help.
+      clearInterval(timer);
+      onFailed(e.code);
+    }
+    // Network errors, timeouts and 5xx are transient: keep polling.
   }
 }, 4000);
 ```
@@ -210,7 +225,12 @@ The package root includes the webhook helpers, which use `node:crypto`. For Reac
 import { Moosyl, AppException } from "moosyl-sdk/client";
 ```
 
-Metro also resolves plain `import { Moosyl } from "moosyl-sdk"` to this entry through the `react-native` export condition. The client only needs global `fetch`, `AbortController` and `setTimeout`.
+Plain `import { Moosyl } from "moosyl-sdk"` also resolves to this entry, with matching types:
+
+- **React Native (Metro)**: through the `react-native` export condition.
+- **Browser bundlers (including Expo web)**: through the `browser` condition.
+
+Cloudflare Workers (`workerd`/`worker`) and Vercel Edge (`edge-light`) keep the full entry. `moosyl-sdk/client` works on older Metro versions without package-exports support, through a `client/package.json` stub. The client only needs global `fetch`, `AbortController` and `setTimeout`.
 
 ### Errors and timeouts
 
