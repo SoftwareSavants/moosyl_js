@@ -1,4 +1,5 @@
-import { Endpoints, Fetcher, FetcherResponse } from "../helpers/fetcher.js";
+import { createEndpoints, Fetcher, FetcherResponse } from "../helpers/fetcher.js";
+import type { ClientOptions } from "../helpers/fetcher.js";
 import { CustomerModel } from "../models/customer-model.js";
 import {
   PaginatedResponse,
@@ -40,7 +41,14 @@ function unwrapList(result: FetcherResponse): {
  * Service for managing customer records.
  */
 export class CustomerService {
-  constructor(public readonly secretApiKey: string) {}
+  constructor(
+    public readonly secretApiKey: string,
+    private readonly options: ClientOptions = {},
+  ) {}
+
+  private get endpoints() {
+    return createEndpoints(this.options.baseUrl);
+  }
 
   async list(params?: {
     id?: string;
@@ -48,8 +56,8 @@ export class CustomerService {
     page?: number;
     limit?: number;
   }): Promise<PaginatedResponse<CustomerModel>> {
-    const result = await new Fetcher(this.secretApiKey).get(
-      Endpoints.customers(params)
+    const result = await new Fetcher(this.secretApiKey, this.options).get(
+      this.endpoints.customers(params)
     );
     const { list, pagination } = unwrapList(result);
     return {
@@ -62,8 +70,8 @@ export class CustomerService {
     externalUserId: string;
     phone?: string;
   }): Promise<CustomerModel> {
-    const result = await new Fetcher(this.secretApiKey).post(
-      Endpoints.customers(),
+    const result = await new Fetcher(this.secretApiKey, this.options).post(
+      this.endpoints.customers(),
       data as unknown as Record<string, unknown>
     );
     return CustomerModel.fromMap(unwrapData(result));
@@ -73,8 +81,8 @@ export class CustomerService {
     id: string,
     data: { externalUserId?: string; phone?: string }
   ): Promise<CustomerModel> {
-    const result = await new Fetcher(this.secretApiKey).patch(
-      Endpoints.customer(id),
+    const result = await new Fetcher(this.secretApiKey, this.options).patch(
+      this.endpoints.customer(id),
       data as unknown as Record<string, unknown>
     );
     return CustomerModel.fromMap(unwrapData(result));

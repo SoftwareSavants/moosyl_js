@@ -1,4 +1,5 @@
-import { Endpoints, Fetcher, FetcherResponse } from "../helpers/fetcher.js";
+import { createEndpoints, Fetcher, FetcherResponse } from "../helpers/fetcher.js";
+import type { ClientOptions } from "../helpers/fetcher.js";
 import {
   CreateSubscriptionByExternalUserRequest,
   CreateSubscriptionRequest,
@@ -45,15 +46,22 @@ function unwrapList(result: FetcherResponse): {
  * Service for managing subscriptions.
  */
 export class SubscriptionService {
-  constructor(public readonly secretApiKey: string) {}
+  constructor(
+    public readonly secretApiKey: string,
+    private readonly options: ClientOptions = {},
+  ) {}
+
+  private get endpoints() {
+    return createEndpoints(this.options.baseUrl);
+  }
 
   async list(params?: {
     status?: SubscriptionStatus;
     page?: number;
     limit?: number;
   }): Promise<PaginatedResponse<SubscriptionModel>> {
-    const result = await new Fetcher(this.secretApiKey).get(
-      Endpoints.subscriptions(params)
+    const result = await new Fetcher(this.secretApiKey, this.options).get(
+      this.endpoints.subscriptions(params)
     );
     const { list, pagination } = unwrapList(result);
     return {
@@ -63,15 +71,15 @@ export class SubscriptionService {
   }
 
   async get(id: string): Promise<SubscriptionModel> {
-    const result = await new Fetcher(this.secretApiKey).get(
-      Endpoints.subscription(id)
+    const result = await new Fetcher(this.secretApiKey, this.options).get(
+      this.endpoints.subscription(id)
     );
     return SubscriptionModel.fromMap(unwrapData(result));
   }
 
   async create(data: CreateSubscriptionRequest): Promise<SubscriptionModel> {
-    const result = await new Fetcher(this.secretApiKey).post(
-      Endpoints.subscriptions(),
+    const result = await new Fetcher(this.secretApiKey, this.options).post(
+      this.endpoints.subscriptions(),
       data as unknown as Record<string, unknown>
     );
     return SubscriptionModel.fromMap(unwrapData(result));
@@ -80,23 +88,23 @@ export class SubscriptionService {
   async createByExternalUser(
     data: CreateSubscriptionByExternalUserRequest
   ): Promise<SubscriptionModel> {
-    const result = await new Fetcher(this.secretApiKey).post(
-      Endpoints.subscriptionByExternalUserCreate(),
+    const result = await new Fetcher(this.secretApiKey, this.options).post(
+      this.endpoints.subscriptionByExternalUserCreate(),
       data as unknown as Record<string, unknown>
     );
     return SubscriptionModel.fromMap(unwrapData(result));
   }
 
   async getByExternalUser(externalUserId: string): Promise<SubscriptionModel> {
-    const result = await new Fetcher(this.secretApiKey).get(
-      Endpoints.subscriptionByExternalUser(externalUserId)
+    const result = await new Fetcher(this.secretApiKey, this.options).get(
+      this.endpoints.subscriptionByExternalUser(externalUserId)
     );
     return SubscriptionModel.fromMap(unwrapData(result));
   }
 
   async cancel(id: string): Promise<SubscriptionModel> {
-    const result = await new Fetcher(this.secretApiKey).post(
-      Endpoints.cancelSubscription(id)
+    const result = await new Fetcher(this.secretApiKey, this.options).post(
+      this.endpoints.cancelSubscription(id)
     );
     return SubscriptionModel.fromMap(unwrapData(result));
   }
