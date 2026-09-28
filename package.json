@@ -41,7 +41,8 @@
   },
   "scripts": {
     "build": "tsc",
-    "test": "npm run build && node --test \"test/**/*.test.mjs\""
+    "test": "npm run build && node --test \"test/**/*.test.mjs\"",
+    "smoke": "npm run build && node scripts/smoke-gimtel.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

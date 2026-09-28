@@ -307,6 +307,37 @@ For more guides and API details, see [docs.moosyl.com](https://docs.moosyl.com).
 
 ## Contributing
 
+### Sandbox smoke test (before a release)
+
+`npm run smoke` builds the package and runs `scripts/smoke-gimtel.mjs`, which
+imports the built package (`moosyl-sdk/client` for the flow, the root entry for
+one check) and runs the Gimtel payment flow against the real Moosyl API: it
+creates a payment request (secret key), picks a Gimtel method, pays without a
+passcode, simulates the transfer and polls until the payment is `completed`,
+then checks that a 404 and a 401 surface as `AppException` with the backend's
+message.
+
+```bash
+MOOSYL_SANDBOX_PUBLISHABLE_KEY=... \
+MOOSYL_SANDBOX_SECRET_KEY=... \
+npm run smoke
+# optional: MOOSYL_BASE_URL (default https://api.moosyl.com)
+```
+
+- Use the publishable and secret keys of the **sandbox** environment of one
+  organization. The script asks the API which environment the keys belong to
+  and refuses to run (exit 2) for production keys, keys from different
+  organizations, or keys with a `live_` prefix.
+- The organization's sandbox must offer a Gimtel method (Bankily, BCI Pay or
+  Amanty via Gimtel).
+- Without the two variables it prints `SKIPPED` and exits 0.
+- CI: `.github/workflows/smoke.yml` runs it on pull requests and on demand when
+  the repository secrets `MOOSYL_SANDBOX_PUBLISHABLE_KEY` and
+  `MOOSYL_SANDBOX_SECRET_KEY` are set (optional repository variable
+  `MOOSYL_BASE_URL`), and skips otherwise.
+
+### Pull requests
+
 1. Fork this repository.
 2. Create a feature branch (`git checkout -b feature-name`).
 3. Commit your changes (`git commit -m 'Add feature'`).

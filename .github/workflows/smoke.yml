@@ -1,0 +1,54 @@
+name: Sandbox smoke test
+
+# Runs the Gimtel payment flow against the real Moosyl sandbox API through the
+# built package. Skips cleanly when the sandbox secrets are not available
+# (forks, Dependabot, repos without the secrets).
+
+on:
+  workflow_dispatch:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sandbox-smoke-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    name: Gimtel sandbox smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      MOOSYL_SANDBOX_PUBLISHABLE_KEY: ${{ secrets.MOOSYL_SANDBOX_PUBLISHABLE_KEY }}
+      MOOSYL_SANDBOX_SECRET_KEY: ${{ secrets.MOOSYL_SANDBOX_SECRET_KEY }}
+      MOOSYL_BASE_URL: ${{ vars.MOOSYL_BASE_URL }}
+    steps:
+      - name: Check for sandbox secrets
+        id: keys
+        run: |
+          if [ -n "$MOOSYL_SANDBOX_PUBLISHABLE_KEY" ] && [ -n "$MOOSYL_SANDBOX_SECRET_KEY" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "SKIPPED: MOOSYL_SANDBOX_PUBLISHABLE_KEY / MOOSYL_SANDBOX_SECRET_KEY secrets are not available" >> "$GITHUB_STEP_SUMMARY"
+            echo "SKIPPED: sandbox secrets are not available"
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.keys.outputs.present == 'true'
+
+      - uses: actions/setup-node@v4
+        if: steps.keys.outputs.present == 'true'
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        if: steps.keys.outputs.present == 'true'
+        run: npm ci
+
+      - name: Build and run the smoke test
+        if: steps.keys.outputs.present == 'true'
+        run: npm run smoke
