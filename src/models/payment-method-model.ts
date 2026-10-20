@@ -34,6 +34,30 @@ export const PaymentMethodTitles: Record<string, string> = {
   bci_pay: "BCIpay",
 };
 
+/** True when `method` is a payment method type this SDK version knows. */
+export function isPaymentMethodType(
+  method: unknown,
+): method is PaymentMethodTypesValue {
+  return (
+    typeof method === "string" &&
+    Object.values(METHOD_TO_STR).includes(method as PaymentMethodTypesValue)
+  );
+}
+
+/**
+ * How a payment method is processed: `native` (direct bank API, e.g. Bankily
+ * with a passcode) or `gimtel` (the payer transfers from their bank app and
+ * Moosyl detects the transfer).
+ */
+export type PaymentMethodIntegration = "native" | "gimtel";
+
+/** Parses the backend `integration` value; anything but `"gimtel"` is `"native"`. */
+export function paymentMethodIntegrationFromString(
+  value: unknown,
+): PaymentMethodIntegration {
+  return value === "gimtel" ? "gimtel" : "native";
+}
+
 export function paymentMethodTypesFromString(
   method: string,
 ): PaymentMethodTypesValue {
@@ -43,23 +67,37 @@ export function paymentMethodTypesFromString(
 }
 
 /**
- * Base payment method (id, method type, payment type).
+ * Payment method (configuration) returned by `getPaymentMethods()`.
  */
 export class PaymentMethod {
   readonly id: string;
   readonly method: PaymentMethodTypesValue;
   readonly bPayNumber: string;
+  /** `"native"` or `"gimtel"`. Defaults to `"native"` when the backend omits it. */
+  readonly integration: PaymentMethodIntegration;
+  /** Whether this configuration belongs to a testing (sandbox) environment. */
+  readonly isTestingMode: boolean;
 
   constructor(options: {
     id: string;
     method: PaymentMethodTypesValue;
     bPayNumber?: string;
+    integration?: PaymentMethodIntegration;
+    isTestingMode?: boolean;
   }) {
     this.id = options.id;
     this.method = options.method;
     this.bPayNumber = options.bPayNumber ?? "";
+    this.integration = options.integration ?? "native";
+    this.isTestingMode = options.isTestingMode ?? false;
   }
 
+  /** True for Gimtel methods: call `pay()` without a passcode and show the returned instructions. */
+  get isGimtel(): boolean {
+    return this.integration === "gimtel";
+  }
+
+  /** Throws for unknown `type` values; `getPaymentMethods()` skips those instead. */
   static fromMap(map: Record<string, unknown>): PaymentMethod {
     const config =
       map.config && typeof map.config === "object"
@@ -69,6 +107,8 @@ export class PaymentMethod {
       id: String(map.id),
       method: paymentMethodTypesFromString(String(map.type)),
       bPayNumber: String(config.code ?? ""),
+      integration: paymentMethodIntegrationFromString(map.integration),
+      isTestingMode: map.isTestingMode === true,
     });
   }
 }
